@@ -1,0 +1,25 @@
+﻿<!Doctype html>
+<html xmlns=http://www.w3.org/1999/xhtml>
+	<head>
+		<meta charset="utf-8">
+    	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<title>视频图侦系统</title>
+		<link rel="stylesheet" href="./scripts/theme/default/style.css" type="text/css">
+		<link href="./styles/main.css" rel="stylesheet" type="text/css" />
+		<script type="text/javascript" src = "./scripts/OpenLayers.debug.js"></script>
+		<script type="text/javascript" src ="./scripts/jquery-1.4.1.min.js"></script>
+		<script type="text/javascript" src ="./scripts/MapConfig.js"></script>
+		<script type="text/javascript">
+			function init(){
+				map = MapConfig.createMap("map");
+			}
+			
+		</script>
+	</head>
+	<body onload="init()">
+	
+		<div id = "map" style="width:800px; height:600px;">
+		</div>
+
+	</body>
+</html>

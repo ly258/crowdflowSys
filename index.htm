@@ -1,0 +1,233 @@
+<html xmlns=http://www.w3.org/1999/xhtml>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<title>人群流量实时监测与分析系统</title>
+	<link rel="stylesheet" href="./scripts/theme/default/style.css" type="text/css">
+	<link href="./styles/main.css" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="./scripts/OpenLayers.debug.js"></script>
+	<script type="text/javascript" src="./scripts/MapConfig.js"></script>
+	<script type="text/javascript" src="./scripts/queue.js"></script>
+	<script type="text/javascript" src="./scripts/camera.js"></script>
+	<script type="text/javascript" src="./scripts/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="./scripts/highcharts.js"></script>
+	<script type="text/javascript" src="./scripts/chart.js"></script>
+	<script type="text/javascript" src="./scripts/people.js"></script>
+	<script type="text/javascript">
+			var peopleList;
+			var analysisMode;
+			function init(){
+				var chart;
+				var map = MapConfig.createMap("map");			
+								
+				var cameraCollection = new OpenLayers.CameraCollection([]);
+				cameraCollection.attach(map);
+				peopleList = new OpenLayers.peopleList("rsList");
+				peopleList.peopleCollection = cameraCollection;
+				peopleList.map = map;
+				peopleList.analysisMode = 1;
+				var peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,cameraCollection);
+				peopleQueryer.query();
+
+				var peopleDistribution = new OpenLayers.peopleDistribution();
+				peopleList.peopleDistribution = peopleDistribution;
+
+				var queue = peopleList.queue;
+				for (var i = 0; i < 4; i++) {
+					$("#select"+queue.base[i]).val("1");
+				};				
+				
+				$(window).resize(layerOut);
+				layerOut();
+                var Dynacharts = new Array();
+                for (var i = 1; i < 5; i++) {
+                	var Dynachart = new dynamicChart();
+                	Dynachart.setHighcharts();
+                	Dynachart.loadchart("curvegraph0"+i);
+                	Dynacharts.push(Dynachart);
+                };
+                peopleList.Dynacharts = Dynacharts;
+				setInterval('peopleList.linkage()',2000);                             
+			}			
+		//布局初始化
+		function layerOut(){
+			   $("#rsList").css("height",$(".tocContainer").height()-$("#rsup").height());
+			   $("#map").css("height",$(".mapContainer").height()-$("#controls").height());
+		}          
+		function modeChange(subject,element){
+			  subject.cameraQueryer.setQueryMode(element.value);
+		}		  
+		function cameraSearch(subject,id){
+			cameraiewer.cameraQueryer.query($("#searchTxt").val());
+		}		  
+	 	function timeCheck(){
+	      	if($("#vdcheckTime").attr("checked")){
+	      		$("#vdstartTime").attr("disabled",false);
+	      		$("#vdendTime").attr("disabled",false);
+	      	}else{
+	      		$("#vdstartTime").attr("disabled",true);
+	      		$("#vdendTime").attr("disabled",true);
+	      	}
+      	}      
+      	function spatialCheck(){
+      		if($("#vdcheckSpatial").attr("checked")){
+      			$("input[name='vdgeoradio']").each(function(){    			
+      				this.disabled = false;
+      				if(this.checked){
+      					videoViewer.cameraQueryer.setQueryMode(this.value);
+      				}      				
+      			});
+      		}else{
+      			$("input[name='vdgeoradio']").attr("disabled",true);
+      			videoViewer.cameraQueryer.setQueryMode("none");
+      		}
+        }       
+        function fovTypeChange(type){
+            var cameras = cameraViewer.cameraCollection.getCameras();
+       	    for(var i = 0;i < cameras.length;i++){
+       			cameras[i].fovType = Number(type);
+       	    }      	    
+       	    cameraViewer.cameraCollection.update();
+        }
+        function selectchangeable(i)
+        {
+       		var queue = peopleList.queue;
+       		$("#select"+queue.base[queue.rear]).val("0");
+       		peopleList.updateQueue(i);
+        }
+        function realtime_monitoring(){
+       		peopleList.analysisMode = 1;
+       		$(".realtime_monitoring").css("color","blue");
+       		$(".st_distribution").css("color","#000000");
+       		$(".cluster").css("color","#000000");
+       		$(".tendency").css("color","#000000");
+       		$(".unusual").css("color","#000000");
+        }
+        function st_distribution()
+        {
+       		peopleList.analysisMode = 2;
+       		$(".realtime_monitoring").css("color","#000000");
+       		$(".st_distribution").css("color","blue");
+       		$(".cluster").css("color","#000000");
+       		$(".tendency").css("color","#000000");
+       		$(".unusual").css("color","#000000");
+        }
+        function cluster()
+        {
+       		peopleList.analysisMode = 3;
+       		$(".realtime_monitoring").css("color","#000000");
+       		$(".st_distribution").css("color","#000000");
+       		$(".cluster").css("color","blue");
+       		$(".tendency").css("color","#000000");
+       		$(".unusual").css("color","#000000");
+        }
+        function tendency()
+        {
+       		peopleList.analysisMode = 4;
+       		$(".realtime_monitoring").css("color","#000000");
+       		$(".st_distribution").css("color","#000000");
+       		$(".cluster").css("color","#000000");
+       		$(".tendency").css("color","blue");
+       		$(".unusual").css("color","#000000");
+        }
+        function unusual()
+        {
+       		peopleList.analysisMode = 5;
+       		$(".realtime_monitoring").css("color","#000000");
+       		$(".st_distribution").css("color","#000000");
+       		$(".cluster").css("color","#000000");
+       		$(".tendency").css("color","#000000");
+       		$(".unusual").css("color","blue");
+        }
+	</script>
+</head>
+<body onload="init()">
+	<!--头部-->
+	<div class="headBar">
+		<div class="headTop">
+			<div class="right">
+				<a href="admin/login.php">后台入口</a>
+				|
+				<a href="#">关于我们</a>
+			</div>
+		</div>
+		<div class="headMain">
+			<div class="logo">
+				<img style="float:left" src="./images/crowd.png" width="48" height="48"/>
+				人群流量实时监测与分析系统
+				<br/>
+				<div style="font-size:14px;font-style:italic">The crowd flow real-time monitoring and analysis system</div>
+			</div>
+		</div>
+	</div>
+	<!--主体部分-->
+	<div class="mainContainer">
+		<div class="tocContainer">
+			<div id="rsup">
+				<div class="tabControl">
+					<div id="cameraTab" class="tab">监控区域设置</div>
+				</div>
+				<div id="cameraQueryControl" class="tabContent">
+					<input  id ="searchTxt" type="text" style="width:200px;height:20px"/>
+					<input  id="searchBtn"  type="button" style="height:30px" value="搜 索" onclick="search()"/>
+					<br/> <b>空间：</b>
+					<input  id="point" name = "georadio" type="radio" value="pt" checked="checked" onclick="modeChange(cameraViewer,this);"/>
+					点选&nbsp;&nbsp;
+					<input  id="rect" name = "georadio" type="radio" value="rect" onclick="modeChange(cameraViewer,this);"/>
+					矩形&nbsp;&nbsp;
+					<input  id="polygon" name = "georadio" type="radio" value="polygon" onclick="modeChange(cameraViewer,this);"/>
+					多边形&nbsp;&nbsp;
+					<br/>
+					<hr/> <b>覆盖：</b>
+					<input  id="current" name = "covradio" type="radio" value="0" checked="checked" onclick="fovTypeChange(this.value)"/>
+					当前&nbsp;&nbsp;
+					<input  id="full" name = "covradio" type="radio" value="1" onclick="fovTypeChange(this.value)"/>
+					理论&nbsp;&nbsp;
+					<input  id="real" name = "covradio" type="radio" value="2" onclick="fovTypeChange(this.value)"/>
+					实际&nbsp;&nbsp;
+				</div>
+				<div class="rsBar">摄相机列表</div>
+			</div>
+			<div id="rsList" class="rsContent"></div>
+		</div>
+		<div class="mapContainer">
+			<div id="controls">
+				<div onclick="realtime_monitoring()" class="realtime_monitoring">实时监控</div>
+				<div onclick="st_distribution()" class="st_distribution">时空分布</div>
+				<div onclick="cluster()" class="cluster">聚类分析</div>
+				<div onclick="tendency()" class="tendency">运动趋势</div>
+				<div onclick="unusual()" class="unusual">异常探测</div>
+			</div>
+			<div id="map"></div>
+		</div>
+	</div>
+	<div id="footer">
+		<table width='100%' height='100%'>
+			<tr height='30px'>
+				<th id="curvegraphheader" class="curvegraphmainheader">区域总人数时空曲线</th>
+				<th id="curvegraphheader01" class="curvegraphheader">时空曲线-C1</th>
+				<th id="curvegraphheader02" class="curvegraphheader">时空曲线-C2</th>
+				<th id="curvegraphheader03" class="curvegraphheader">时空曲线-C3</th>
+				<th id="curvegraphheader04" class="curvegraphheader">时空曲线-C4</th>
+			</tr>
+			<tr>
+				<td>
+					<div id="curvegraphmain" style="min-width:300px;height:160px;"></div>
+				</td>
+				<td>
+					<div id="curvegraph01" style="min-width:320px;height:160px;"></div>
+				</td>
+				<td>
+					<div id="curvegraph02" style="min-width:320px;height:160px;"></div>
+				</td>
+				<td>
+					<div id="curvegraph03" style="min-width:320px;height:160px;"></div>
+				</td>
+				<td>
+					<div id="curvegraph04" style="min-width:310px;height:160px;"></div>
+				</td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>
