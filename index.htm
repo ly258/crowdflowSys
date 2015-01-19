@@ -168,23 +168,14 @@
 					<div id="cameraTab" class="tab">监控区域设置</div>
 				</div>
 				<div id="cameraQueryControl" class="tabContent">
-					<input  id ="searchTxt" type="text" style="width:200px;height:20px"/>
-					<input  id="searchBtn"  type="button" style="height:30px" value="搜 索" onclick="search()"/>
-					<br/> <b>空间：</b>
-					<input  id="point" name = "georadio" type="radio" value="pt" checked="checked" onclick="modeChange(cameraViewer,this);"/>
-					点选&nbsp;&nbsp;
+					<b style="">设置方式：</b>
 					<input  id="rect" name = "georadio" type="radio" value="rect" onclick="modeChange(cameraViewer,this);"/>
-					矩形&nbsp;&nbsp;
+					矩形&nbsp;&nbsp;&nbsp;&nbsp;
 					<input  id="polygon" name = "georadio" type="radio" value="polygon" onclick="modeChange(cameraViewer,this);"/>
 					多边形&nbsp;&nbsp;
 					<br/>
-					<hr/> <b>覆盖：</b>
-					<input  id="current" name = "covradio" type="radio" value="0" checked="checked" onclick="fovTypeChange(this.value)"/>
-					当前&nbsp;&nbsp;
-					<input  id="full" name = "covradio" type="radio" value="1" onclick="fovTypeChange(this.value)"/>
-					理论&nbsp;&nbsp;
-					<input  id="real" name = "covradio" type="radio" value="2" onclick="fovTypeChange(this.value)"/>
-					实际&nbsp;&nbsp;
+					<hr/> <b style="float:left;">区域警戒人数设置：</b>
+					<input  id="totalAlarm" name = "totalPeopleAlarm" type="text" value="0" onclick="totalAlarmChange(this.value)" style="width:130px"/>人
 				</div>
 				<div class="rsBar">摄相机列表</div>
 			</div>
