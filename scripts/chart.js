@@ -19,6 +19,11 @@ dynamicChart.prototype = {
 		});
 	},
 
+    addTotalNumPoint : function(data){
+        x = (new Date()).getTime();
+        this.chart.series[0].addPoint([x, data], true, true);
+    },
+
     addPoint : function(data){
         this.chart.yAxis[0].removePlotLine(2); 
         x = (new Date()).getTime();
@@ -54,7 +59,8 @@ dynamicChart.prototype = {
                 type: 'datetime',                                                   
                 tickPixelInterval: 100                                              
             },                                                                      
-            yAxis: {                                                                
+            yAxis: {  
+                min:0,                                                            
                 title: {                                                            
                     text: '人数'                                                   
                 },                                                                  
@@ -68,7 +74,7 @@ dynamicChart.prototype = {
                 formatter: function() {                                             
                         return '<b>'+ this.series.name +'</b><br>'+                
                         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) +'<br>'+
-                        Highcharts.numberFormat(this.y, 2);                         
+                        Highcharts.numberFormat(this.y, 0);//0表示精确到小数点后0位                          
                 }                                                                   
             },                                                                      
             legend: {                                                               
@@ -83,8 +89,7 @@ dynamicChart.prototype = {
                     // generate an array of random data                             
                     var data = [],                                                  
                         time = (new Date()).getTime(),                              
-                        i;                                                          
-                                                                                    
+                        i;                                                                                                                                             
                     for (i = -19; i <= 0; i++) {                                    
                         data.push({                                                 
                             x: time + i * 1000,                                     

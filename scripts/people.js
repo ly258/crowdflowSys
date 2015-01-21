@@ -1,12 +1,20 @@
 /********************************************************************************************************
 people.js
-基于openlayers的人群库
+基于openlayers的人群相关库
 create by liuyang
 2015/01/09
 *********************************************************************************************************/
 //
 //人群查询分析器
 OpenLayers.PeopleQueryer = OpenLayers.Class({
+	map:null,
+	selectLayer:null,
+	drawControls:null,
+	MODE:{
+		POINT:"point",
+		RECT:"rect",
+		POLYGON:"POLYGON"
+	},
 	peopleList:null,
 	peopleCollection:null,
 	queryurl:"peopleQuery.php",
@@ -14,8 +22,37 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
 	initialize : function(peopleList,peopleCollection){
 		this.peopleList = peopleList;
 		this.peopleCollection = peopleCollection;
-	},
 
+		var selectLayer = new OpenLayers.Layer.Vector("selectLayer",{
+			styleMap:new OpenLayers.StyleMap({'default':{
+				strokeColor: "#00FFFF",
+                    strokeOpacity: 1,
+                    strokeWidth: 3,
+                    fillColor: "#00FFFF",
+                    fillOpacity: 0.1,
+			}})
+		});
+		this.selectLayer = selectLayer;
+		var drawControls = {
+			rect:new OpenLayers.Control.DrawFeature(selectLayer,
+                        OpenLayers.Handler.RegularPolygon, {
+                        handlerOptions: {
+                                sides: 4,
+                                irregular: true
+           }}),
+			polygon:new OpenLayers.Control.DrawFeature(selectLayer,
+                          OpenLayers.Handler.Polygon)
+		};
+		this.drawControls = drawControls;
+		var queryer = this;
+		for(var key in drawControls) {
+			drawControls[key].events.register("featureadded",drawControls[key],function (e){
+				queryer.selectLayer.removeAllFeatures();
+				queryer.selectLayer.addFeatures([e.feature]);
+				peopleList.selectGeometry = MapConfig.rTransform(e.feature.geometry);
+			});
+        }
+	},
 	query : function(){
 		var peopleList = this.peopleList;
 		var peopleCollection = this.peopleCollection;
@@ -33,8 +70,36 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
 			}
 		})
 	},
-
-
+	setQueryMode:function(mode){
+		this.selectLayer.removeAllFeatures();
+		var drawControls = this.drawControls;
+        for(key in drawControls) {
+            var control = drawControls[key];
+            if(mode == key) {
+                control.activate();
+            } else {
+                control.deactivate();
+            }
+        }
+	},
+	attach:function(map){
+		map.addLayers([this.selectLayer]);
+		for(var key in this.drawControls)
+		{
+			map.addControl(this.drawControls[key]);
+		}
+		this.map = map;
+	},
+	detach:function(){
+		if(!this.map) return;
+		
+		this.map.removeLayer(this.selectLayer);
+		for(var key in this.drawControls) {
+			this.drawControls[key].deactivate();
+            this.map.removeControl(this.drawControls[key]);
+		}
+		this.map = null;
+	}
 });
 
 //人群类
@@ -86,11 +151,16 @@ OpenLayers.People.Prase=function(cGeoJson){
 
 OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	queue:null,
+	totalNumDynachart:null,
 	Dynacharts:null,
 	peopleCollection:null,
 	peopleDistribution:null,
 	map:null,
 	analysisMode:null,
+	selectGeometry:null,
+	tempNum:0,
+	areaPeoNum:0,
+	totalPeopleCountMode:"whole",
 	defaultStyle : function(i){
 		var cameras = this.cameras;
 		var typeName,stateName;
@@ -181,6 +251,14 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		return this.queue;
 	},
 
+	count : function(data){
+		for (var i=0;i<data.peoplePosition.length;i++) {
+			var peoplePos = new OpenLayers.Geometry.Point(data.peoplePosition[i].x,data.peoplePosition[i].y);
+			if(this.selectGeometry.intersects(peoplePos))
+				this.tempNum++;
+		};
+	},
+
 	linkage : function(){
 		var that = this;
 		$.ajax({
@@ -189,6 +267,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 			dataType:"json",
 			success:function(data){
 				var cameras = OpenLayers.People.Prase(data);
+				that.areaPeoNum = 0;				
 				for (var i = 0; i < cameras.length; i++) {
 					if(cameras[i].number==-1)
 					{
@@ -202,8 +281,23 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 						{
 							$("#presentpeonum"+i).html("<b>当前人数："+cameras[i].number+"</b>");
 						}
-					}				
-				};				
+					}
+					if(that.totalPeopleCountMode=="area")
+					{
+						that.count(cameras[i]);	
+					}else{
+						if(cameras[i].number!=-1)
+						{
+							that.areaPeoNum = that.areaPeoNum+cameras[i].number;
+						}						
+					}			
+				};	
+				if(that.totalPeopleCountMode=="area")
+				{
+					that.areaPeoNum = that.tempNum;	
+					that.tempNum = 0;
+				}
+				that.totalNumDynachart.addTotalNumPoint(that.areaPeoNum);
 				for (var i = 0; i < 4; i++) {
 					$("#curvegraphheader0"+(i+1)).html(cameras[that.queue.base[i]].name);
 					that.Dynacharts[i].addPoint(cameras[that.queue.base[i]]);

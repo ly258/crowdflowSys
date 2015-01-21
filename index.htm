@@ -15,10 +15,10 @@
 	<script type="text/javascript" src="./scripts/people.js"></script>
 	<script type="text/javascript">
 			var peopleList;
-			var analysisMode;
+			var analysisMode,peopleQueryer,map;
 			function init(){
 				var chart;
-				var map = MapConfig.createMap("map");			
+				map = MapConfig.createMap("map");			
 								
 				var cameraCollection = new OpenLayers.CameraCollection([]);
 				cameraCollection.attach(map);
@@ -26,11 +26,15 @@
 				peopleList.peopleCollection = cameraCollection;
 				peopleList.map = map;
 				peopleList.analysisMode = 1;
-				var peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,cameraCollection);
+				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,cameraCollection);
 				peopleQueryer.query();
 
 				var peopleDistribution = new OpenLayers.peopleDistribution();
 				peopleList.peopleDistribution = peopleDistribution;
+
+				$("#rect").attr("disabled","true");
+        		$("#polygon").attr("disabled","true");
+        		$("#totalAlarm").attr("disabled","true");
 
 				var queue = peopleList.queue;
 				for (var i = 0; i < 4; i++) {
@@ -47,6 +51,12 @@
                 	Dynacharts.push(Dynachart);
                 };
                 peopleList.Dynacharts = Dynacharts;
+
+                var totalNumDynachart = new dynamicChart();
+                totalNumDynachart.setHighcharts();
+                totalNumDynachart.loadchart("curvegraphmain");
+                peopleList.totalNumDynachart = totalNumDynachart;
+                
 				setInterval('peopleList.linkage()',2000);                             
 			}			
 		//布局初始化
@@ -139,6 +149,27 @@
        		$(".tendency").css("color","#000000");
        		$(".unusual").css("color","blue");
         }
+        function ifareasetting()
+        {
+        	if($('#ifareasetting').prop('checked')==false)
+        	{
+        		$("#rect").attr("disabled","true");
+        		$("#polygon").attr("disabled","true");
+        		$("#totalAlarm").attr("disabled","true");
+        		peopleList.totalPeopleCountMode = "whole";
+        		peopleQueryer.detach();
+        	}else{
+        		$("#rect").removeAttr("disabled");
+        		$("#polygon").removeAttr("disabled");
+        		$("#totalAlarm").removeAttr("disabled");
+        		peopleList.totalPeopleCountMode = "area";
+        		peopleQueryer.attach(map);
+        	}
+        }
+        function modeChange(element)
+        {
+        	peopleQueryer.setQueryMode(element.value);
+        }
 	</script>
 </head>
 <body onload="init()">
@@ -169,10 +200,12 @@
 				</div>
 				<div id="cameraQueryControl" class="tabContent">
 					<b style="">设置方式：</b>
-					<input  id="rect" name = "georadio" type="radio" value="rect" onclick="modeChange(cameraViewer,this);"/>
-					矩形&nbsp;&nbsp;&nbsp;&nbsp;
-					<input  id="polygon" name = "georadio" type="radio" value="polygon" onclick="modeChange(cameraViewer,this);"/>
-					多边形&nbsp;&nbsp;
+					<input  id="rect" name = "georadio" type="radio" value="rect" onclick="modeChange(this);"/>
+					矩形
+					<input  id="polygon" name = "georadio" type="radio" value="polygon" onclick="modeChange(this);"/>
+					多边形
+					<input  id="ifareasetting" name = "ifareasetting" type="checkbox" onclick="ifareasetting();"/>
+					是否设置
 					<br/>
 					<hr/> <b style="float:left;">区域警戒人数设置：</b>
 					<input  id="totalAlarm" name = "totalPeopleAlarm" type="text" value="0" onclick="totalAlarmChange(this.value)" style="width:130px"/>人
