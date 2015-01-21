@@ -1,0 +1,213 @@
+html,body{
+	margin:0 0 0 0px;
+	padding:0 0 0 0px;
+	font-family: "微软雅黑";
+	width:100%;
+	height:100%;
+	font-size:14px;
+}
+div{
+	margin:0 0 0 0px;
+	padding:0 0 0 0px;
+}
+div .headBar{
+	width:100%;	
+	height:90px;
+}
+div .headTop{
+   	width:100%;	
+	height:30px;
+	background-color:#000000;
+	vertical-align: bottom;
+}
+div .headMain{
+	width:100%;
+	height:60px;
+	margin:0px;
+	padding-top:5px;
+	background-color:#DEDEDE;
+}
+div .right{
+	color:white;
+	float:right;
+	vertical-align: bottom;
+	margin-right:10px;
+	margin-top:5px;
+}
+div .right a:link{
+	color:white;
+	text-decoration:none; 
+}
+div .right a:link{
+	color:white;
+	text-decoration:none; 
+}
+div .right a:visited{
+	color:white;
+	text-decoration:none; 
+}
+div .right a:hover{
+	color:white;
+	text-decoration:underline; 
+}
+div .logo{
+	font-family:"黑体";
+	font-size:30px;
+	font-weight:700;
+	color:#333399;
+	margin-left:10px;
+}
+div.mainContainer{
+	width:100%;
+	height:auto;
+	position:absolute;
+	top:90px;
+	bottom:200px;
+}
+div .tocContainer{
+	width:300px;
+	height:100%;
+	overflow:hidden;
+	float:left;
+}
+div .mapContainer{
+	margin-left:300px;
+	width:auto;
+	height:100%;
+}
+div .tabControl{
+	width:100%;
+	height:30px;
+}
+div .tab{
+	width:300px;
+	height:30px;
+	text-align:center;	
+	background:#bfbfbf;
+	font-weight:600;
+	/*
+	background: -moz-linear-gradient(top, #b5bbbb, #FFFFFF); 
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #b5bbbb), color-stop(1, #FFFFFF)); 
+	background: -ms-linear-gradient(top, #b5bbbb, #FFFFFF);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#b5bbbb', endColorstr='#FFFFFF', GradientType='0'); 
+	background: linear-gradient(top, #b5bbbb, #FFFFFF);
+	*/
+	font-size:17px;
+	padding:5px 0px 0px 0px;
+}
+div .tabContent{
+	width:100%;
+	height:70px;
+	padding-top:10px;
+	padding-left:10px;
+    vertical-align:middle;
+}
+div .rsBar{
+	width:300px;
+	height:30px;
+	padding:5px 0px 0px 0px;
+	font-size:17px;
+	border-right:1px solid #000000;
+	background:#bfbfbf;
+	text-align: center;
+	font-weight:600;
+	/*
+	background: -moz-linear-gradient(top, #b5bbbb, #FFFFFF); 
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #b5bbbb), color-stop(1, #FFFFFF)); 
+	background: -ms-linear-gradient(top, #b5bbbb, #FFFFFF);
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#b5bbbb', endColorstr='#FFFFFF', GradientType='0'); 
+	background: linear-gradient(top, #b5bbbb, #FFFFFF);
+	*/
+}
+
+div#map{
+	width:100%;
+	height:auto;
+}
+div .rsContent{
+	width:300px;
+	height:520px;
+	overflow-y:scroll;
+}
+
+#footer{
+	width:100%;
+	height:200px;
+	position:absolute;
+	bottom: 0px;
+	background-color: #727272;
+}
+
+.curvegraphmainheader{
+	background-color: #bfbfbf;
+	height: 30px;
+	width:300px;
+	text-align: center;
+}
+
+.curvegraphheader{
+	background-color: #bfbfbf;
+	height: 30px;
+	text-align: center;
+}
+
+#controls{
+	background-color: #bfbfbf;
+	height: 35px;
+}
+
+.realtime_monitoring{
+	color:blue;
+	float: left;
+	margin: 5px 15px 5px 35px;
+	font-size: 17px;
+	font-weight:600;
+}
+
+.realtime_monitoring:hover{
+	cursor: pointer;
+}
+
+.st_distribution{
+	float: left;
+	margin: 5px 15px 5px 15px;
+	font-size: 17px;
+	font-weight:600;
+}
+
+.st_distribution:hover{
+	cursor: pointer;
+}
+
+.cluster{
+	float: left;
+	margin:5px 15px 5px 15px;
+	font-size: 17px;
+	font-weight:600;
+}
+
+.cluster:hover{
+	cursor: pointer;
+}
+
+.tendency{
+	float: left;
+	margin:5px 15px 5px 15px;
+	font-size: 17px;
+	font-weight:600;
+}
+
+.tendency:hover{
+	cursor: pointer;
+}
+
+.unusual{
+	float: left;
+	margin:5px 15px 5px 15px;
+	font-size: 17px;
+	font-weight:600;
+}
+
+.unusual:hover{
+	cursor: pointer;
+}

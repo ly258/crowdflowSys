@@ -1,0 +1,51 @@
+﻿<!Doctype html>
+<html xmlns=http://www.w3.org/1999/xhtml>
+	<head>
+	<meta charset="utf-8">
+    	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<title>视频图侦系统</title>
+		<link rel="stylesheet" href="./scripts/theme/default/style.css" type="text/css">
+		<link href="./styles/main.css" rel="stylesheet" type="text/css" />
+		<script type="text/javascript" src = "./scripts/OpenLayers.debug.js"></script>
+		<script type="text/javascript" src ="./scripts/jquery-1.4.1.min.js"></script>
+		<script type="text/javascript" src ="./scripts/MapConfig.js"></script>
+		<script type="text/javascript" src ="./scripts/DemoJson.js"></script>
+		<script type="text/javascript">
+			var cameraViewer;
+			function init(){
+				map = MapConfig.createMap("map");				
+				$(window).resize(layerOut);
+				layerOut();
+			}
+			
+			//布局初始化
+		   function layerOut(){
+			   var headHeight =  String($(".headBar").css("height"));
+		   	   var leftWidth = String($(".tocContainer").css("width"));	
+			   headHeight = Number(headHeight.substring(0,headHeight.length-2));  
+			   leftWidth = Number(leftWidth.substring(0,leftWidth.length-2));
+			   //$(".tocContainer").css("height",$(document.body).height()-headHeight);
+			   //$(".mapContainer").css("height",$(document.body).height()-headHeight);
+			   $(".mapContainer").css("width",$(document.body).width()-leftWidth);
+			   $(".mainContainer").css("height",$(document.body).height()-headHeight);
+			   $("#rsList").css("height",$(".tocContainer").height()-130);
+			    			   
+			   //alert($(".rsBar").position().top);
+			   map.updateSize();
+
+		   }
+          
+		  function modeChange(element){
+			cameraViewer.cameraQueryer.setQueryMode(element.value);
+		  }
+		  
+		  function search(){
+			cameraViewer.cameraQueryer.query($("#searchTxt").val());
+		  }
+		</script>
+	</head>
+	<body onload="init()">
+		<div id = "map" class="mapContainer" width="800" height="600">
+		</div>
+	</body>
+</html>

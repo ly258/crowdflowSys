@@ -1,0 +1,26 @@
+//摄像机GeoJson
+var DemoCameraCollectionJson = {
+	"type":"FeatureCollection","features"[
+	{"type":"Feature",
+	 "geometry":{
+		 "type":"Point",
+		 "coordinates":[13237081.853,3778646.925]
+	 },
+	 "porperties":{
+		 "id":"320000679090",
+		 "name":"南师大北门",
+		 "ip":"172.22.161.35",
+		 "avpath":"test/320000679090",
+		 "type":0,
+		 "state":0,
+		 "height":10,
+		 "pan":30,
+		 "tilt":70,
+		 "focal":1000,
+		 "ccdwidth":800,
+		 "ccdheight":640,
+		 "maxdist":200
+	 }	
+	}
+	]
+};
