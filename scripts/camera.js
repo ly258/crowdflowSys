@@ -367,46 +367,6 @@ OpenLayers.CameraCollection = OpenLayers.Class({
 		camera.marker.events.register("click",camera.marker,function(evt){	
 				mediante.select(this.camera,true);  
 		});
-		if(camera.number>camera.alarm)
-		{
-			camera.fov.style = {
-				strokeColor: "red",
-                strokeOpacity: 1,
-                strokeWidth: 1,
-                fillColor: "red",
-                fillOpacity: 0.5,
-				// label with \n linebreaks
-                label : String(camera.number),                   
-                fontColor: "black",
-                fontSize: "12px",
-                fontFamily: "Courier New, monospace",
-                fontWeight: "bold",
-                labelAlign: "cm",
-                labelXOffset: "0",
-                labelYOffset: "0",
-                labelOutlineColor: "white",
-                labelOutlineWidth: 3
-			}
-		}else{
-			camera.fov.style = {
-				strokeColor: "#7CB5EC",
-                strokeOpacity: 1,
-                strokeWidth: 1,
-                fillColor: "#7CB5EC",
-                fillOpacity: 0.5,
-				// label with \n linebreaks
-                label : String(camera.number),                   
-                fontColor: "black",
-                fontSize: "12px",
-                fontFamily: "Courier New, monospace",
-                fontWeight: "bold",
-                labelAlign: "cm",
-                labelXOffset: "0",
-                labelYOffset: "0",
-                labelOutlineColor: "white",
-                labelOutlineWidth: 3
-			}
-		}
 		this._fovLayer.addFeatures([camera.fov]);
 	},
 	info:function(ccamera){

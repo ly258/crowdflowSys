@@ -16,17 +16,21 @@
 	<script type="text/javascript">
 			var peopleList;
 			var analysisMode,peopleQueryer,map;
+			
 			function init(){
 				var chart;
 				map = MapConfig.createMap("map");			
-								
-				var cameraCollection = new OpenLayers.CameraCollection([]);
-				cameraCollection.attach(map);
+
+				var vlc = document.getElementById("vlc");
+				var peopleCollection = new OpenLayers.peopleCollection([],vlc);
+				//peopleCollection.play();
+
+				peopleCollection.attach(map);
 				peopleList = new OpenLayers.peopleList("rsList");
-				peopleList.peopleCollection = cameraCollection;
+				peopleList.peopleCollection = peopleCollection;
 				peopleList.map = map;
 				peopleList.analysisMode = 1;
-				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,cameraCollection);
+				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,peopleCollection);
 				peopleQueryer.query();
 
 				var peopleDistribution = new OpenLayers.peopleDistribution();
@@ -65,7 +69,10 @@
   					{
       					peopleList.totalAlarm = $("#totalAlarm").attr("value");
   					}
-				});                            
+				});   
+
+				//var Drag = new OpenLayers.RDrag($('#videoPlayer').get(0));
+				var Drag = new OpenLayers.realmonitorDrag($('#videoTitle').get(0));
 			}			
 		//布局初始化
 		function layerOut(){
@@ -224,6 +231,24 @@
 				</td>
 			</tr>
 		</table>
+	</div>
+	<div id = "videoPlayer">
+		<div id="videoTitle">
+			<img  alt = "找不到图片" width = "24" height = "24" src = "images/error.png"  style="margin-left:450px;cursor:pointer" onclick = "$('#videoPlayer').hide();"/>	
+		</div>
+		<div id="VLCPlayer">
+			<EMBED pluginspage="http://www.videolan.org"
+	       	type="application/x-vlc-plugin"
+	       	version="VideoLAN.VLCPlugin.2"
+	       	width="480"
+	       	height="320"
+	       	toolbar="true"
+	       	loop="true"
+	       	text="Waiting for video"
+	       	id="vlc"
+	       	target="">
+			</EMBED>
+		</div>
 	</div>
 </body>
 </html>

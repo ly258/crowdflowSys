@@ -261,6 +261,11 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		};
 	},
 
+	realtimeVideoSelect : function(camera,isScrollTo){
+		this.peopleCollection.play();
+		this.select(camera,isScrollTo);
+	},
+
 	linkage : function(){
 		var that = this;
 		$.ajax({
@@ -376,5 +381,132 @@ OpenLayers.peopleDistribution = OpenLayers.Class({
 
 		this.map.removeLayer(this.peopleDistributionLayer);
 		this.map = null;
+	},
+});
+
+OpenLayers.realmonitorDrag = OpenLayers.Class({
+	oTitle:null,
+	oDrag:null,
+	disx:null,
+	disy:null,
+	initialize : function(o){
+		o.onmousedown = this.fnDown;
+		o.rDrag = this;
+	},
+	fnDown : function(event){
+		event = event || window.event;
+		var oTitle;
+		var rDrag = this.rDrag;
+		rDrag.oTitle = oTitle = this;
+		rDrag.oDrag = $("#videoPlayer").get(0);
+		//光标按下时光标和面板之间的距离
+		rDrag.disx = event.clientX - rDrag.oDrag.offsetLeft;
+		rDrag.disy = event.clientY - rDrag.oDrag.offsetTop;
+		//移动
+		oTitle.onmousemove = rDrag.fnMove;
+		oTitle.onmouseup = rDrag.fnUp;
+	},
+	fnMove : function(event){
+		var rDrag = this.rDrag;
+		event = event || window.event;
+		var l = event.clientX - this.rDrag.disx,
+			t = event.clientY - this.rDrag.disy;
+		this.rDrag.oDrag.style.left = l+"px";
+		this.rDrag.oDrag.style.top = t+"px";
+	},
+	fnUp: function (e) {
+           var o = this.rDrag.oTitle;
+           this.rDrag.oTitle = this.rDrag.oDrag = o.onmousemove = o.onmouseup = null;
+     },
+});
+
+OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
+	vlcPlayer:null,
+	targetURL:"",
+	initialize : function(cameras,videoPlayer){
+		this._cameras = cameras;
+		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
+		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
+		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
+		this.vlcPlayer = videoPlayer;
+	},
+	play : function(){
+		$("videoPlayer").show();
+		this.doGo("rtsp://admin:admin@172.21.150.129:554/cam/realmonitor?channel=4&subtype=0");
+	},
+	doGo : function(targetURL)
+	{
+	    if( this.vlcPlayer )
+	    {
+	        this.vlcPlayer.playlist.items.clear();
+	        while( this.vlcPlayer.playlist.items.count > 0 )
+	        {
+	            // clear() may return before the playlist has actually been cleared
+	            // just wait for it to finish its job
+	        }
+	        var options = [":rtsp-tcp"];
+	        var itemId = this.vlcPlayer.playlist.add(targetURL,"",options);
+	        options = [];
+	        if( itemId != -1 )
+	        {
+	            // play MRL
+	            this.vlcPlayer.playlist.playItem(itemId);
+	        }
+	        else
+	        {
+	            alert("cannot play at the moment !");
+	        }
+	    }
+	},
+	renderCamera:function(camera){
+		var mediante = this.mediante;
+		this._cameraLayer.addMarker(camera.marker);
+			
+		camera.popup = null;
+		camera.marker.camera = camera;		
+		camera.marker.events.register("click",camera.marker,function(evt){	
+				mediante.select(this.camera,true);  
+		});
+		if(camera.number>camera.alarm)
+		{
+			camera.fov.style = {
+				strokeColor: "red",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "red",
+                fillOpacity: 0.5,
+				// label with \n linebreaks
+                label : String(camera.number),                   
+                fontColor: "black",
+                fontSize: "12px",
+                fontFamily: "Courier New, monospace",
+                fontWeight: "bold",
+                labelAlign: "cm",
+                labelXOffset: "0",
+                labelYOffset: "0",
+                labelOutlineColor: "white",
+                labelOutlineWidth: 3
+			}
+		}else{
+			camera.fov.style = {
+				strokeColor: "#7CB5EC",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "#7CB5EC",
+                fillOpacity: 0.5,
+				// label with \n linebreaks
+                label : String(camera.number),                   
+                fontColor: "black",
+                fontSize: "12px",
+                fontFamily: "Courier New, monospace",
+                fontWeight: "bold",
+                labelAlign: "cm",
+                labelXOffset: "0",
+                labelYOffset: "0",
+                labelOutlineColor: "white",
+                labelOutlineWidth: 3
+			}
+		}
+		this._fovLayer.addFeatures([camera.fov]);
 	},
 });

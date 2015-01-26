@@ -211,3 +211,27 @@ div .rsContent{
 .unusual:hover{
 	cursor: pointer;
 }
+div#videoPlayer{
+  	background-color:#4b6c9e;
+  	width:500px;
+  	height:360px;
+  	border:#ccc solid 1px;
+  	z-index:9999;
+	position:absolute;
+	border-radius:15px;
+	left: 200px;
+	top:200px;
+	
+ }
+ 
+ div#videoTitle{
+ 	background-color:#4b6c9e; 
+ 	width:500px;
+ 	height:25px;
+ 	border-radius:15px 15px 0px 0px;
+ 	float: right;
+ }
+#VLCPlayer{
+	margin-left: 10px;
+	margin-right: 10px;
+}
