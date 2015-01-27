@@ -423,12 +423,14 @@ OpenLayers.realmonitorDrag = OpenLayers.Class({
 OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	vlcPlayer:null,
 	targetURL:"",
-	initialize : function(cameras,videoPlayer){
+	peopleList:null,
+	initialize : function(cameras,videoPlayer,peopleList){
 		this._cameras = cameras;
 		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
 		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
 		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
 		this.vlcPlayer = videoPlayer;
+		this.peopleList = peopleList;
 	},
 	play : function(){
 		$("videoPlayer").show();
@@ -459,13 +461,13 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	    }
 	},
 	renderCamera:function(camera){
-		var mediante = this.mediante;
+		var peopleList = this.peopleList;
 		this._cameraLayer.addMarker(camera.marker);
 			
 		camera.popup = null;
 		camera.marker.camera = camera;		
 		camera.marker.events.register("click",camera.marker,function(evt){	
-				mediante.select(this.camera,true);  
+				peopleList.select(this.camera,true);  
 		});
 		if(camera.number>camera.alarm)
 		{

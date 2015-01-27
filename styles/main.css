@@ -221,7 +221,7 @@ div#videoPlayer{
 	border-radius:15px;
 	left: 200px;
 	top:200px;
-	
+	display: none;
  }
  
  div#videoTitle{
