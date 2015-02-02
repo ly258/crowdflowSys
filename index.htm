@@ -35,6 +35,7 @@
 
 				var peopleDistribution = new OpenLayers.peopleDistribution();
 				peopleList.peopleDistribution = peopleDistribution;
+				peopleCollection.peopleList = peopleList;
 
 				$("#rect").attr("disabled","true");
         		$("#polygon").attr("disabled","true");
@@ -234,7 +235,7 @@
 	</div>
 	<div id = "videoPlayer">
 		<div id="videoTitle">
-			<img  alt = "找不到图片" width = "24" height = "24" src = "images/error.png"  style="margin-left:450px;cursor:pointer" onclick = "$('#videoPlayer').hide();"/>	
+			<img  alt = "找不到图片" width = "24" height = "24" src = "images/error.png"  style="margin-left:470px;cursor:pointer" onclick = "$('#videoPlayer').hide();$('#vlc').get(0).playlist.stop();"/>	
 		</div>
 		<div id="VLCPlayer">
 			<EMBED pluginspage="http://www.videolan.org"
@@ -242,7 +243,7 @@
 	       	version="VideoLAN.VLCPlugin.2"
 	       	width="480"
 	       	height="320"
-	       	toolbar="true"
+	       	toolbar="false"
 	       	loop="true"
 	       	text="Waiting for video"
 	       	id="vlc"

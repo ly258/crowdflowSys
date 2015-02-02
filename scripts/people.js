@@ -262,8 +262,8 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	},
 
 	realtimeVideoSelect : function(camera,isScrollTo){
-		this.peopleCollection.play();
-		this.select(camera,isScrollTo);
+		this.peopleCollection.play(camera.avpath);
+		//this.select(camera,isScrollTo);
 	},
 
 	linkage : function(){
@@ -432,12 +432,13 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 		this.vlcPlayer = videoPlayer;
 		this.peopleList = peopleList;
 	},
-	play : function(){
-		$("videoPlayer").show();
-		this.doGo("rtsp://admin:admin@172.21.150.129:554/cam/realmonitor?channel=4&subtype=0");
+	play : function(url){
+		$("#videoPlayer").show();
+		this.doGo(url);
 	},
 	doGo : function(targetURL)
 	{
+		this.vlcPlayer.playlist.stop();
 	    if( this.vlcPlayer )
 	    {
 	        this.vlcPlayer.playlist.items.clear();
@@ -467,7 +468,7 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 		camera.popup = null;
 		camera.marker.camera = camera;		
 		camera.marker.events.register("click",camera.marker,function(evt){	
-				peopleList.select(this.camera,true);  
+				peopleList.realtimeVideoSelect(this.camera,true);  
 		});
 		if(camera.number>camera.alarm)
 		{
