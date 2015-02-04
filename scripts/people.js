@@ -263,7 +263,35 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 
 	realtimeVideoSelect : function(camera,isScrollTo){
 		this.peopleCollection.play(camera.avpath);
-		//this.select(camera,isScrollTo);
+		this.select(camera,isScrollTo);
+	},
+
+	update:function(){	
+		var container = this.container;
+		var cameras = this.cameras;
+		var cameraCollection = this.cameraCollection;
+		
+		container.empty();
+		for(var i = 0;i < cameras.length;i++){
+			
+			var item = this.defaultStyle(i);
+			cameras[i].index = i;
+			container.append(item);			
+		}
+
+		var peolist = this;
+		//定义点击函数
+		$(".item").click(function(){		
+			peolist.realtimeVideoSelect(cameras[$(this).attr("id")],true);			
+		});
+		//列表变色处理
+ 		$(".item").mouseover(function(){
+				$(this).css("background-color","yellow");		 
+		});
+
+		$(".item").mouseout(function(){
+				$(this).css("background-color","white");		  
+	    });	
 	},
 
 	linkage : function(){
@@ -464,8 +492,7 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	renderCamera:function(camera){
 		var peopleList = this.peopleList;
 		this._cameraLayer.addMarker(camera.marker);
-			
-		camera.popup = null;
+
 		camera.marker.camera = camera;		
 		camera.marker.events.register("click",camera.marker,function(evt){	
 				peopleList.realtimeVideoSelect(this.camera,true);  
