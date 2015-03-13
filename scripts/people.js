@@ -333,7 +333,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 					that.tempNum = 0;
 				}
 				that.totalNumDynachart.addTotalNumPoint(that.areaPeoNum,that.totalAlarm);
-				for (var i = 0; i < 4; i++) {
+				for (var i = 0; i < 2; i++) {
 					$("#curvegraphheader0"+(i+1)).html(cameras[that.queue.base[i]].name);
 					that.Dynacharts[i].addPoint(cameras[that.queue.base[i]]);
 				};
