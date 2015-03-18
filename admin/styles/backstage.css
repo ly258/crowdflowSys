@@ -35,6 +35,7 @@ a:hover{text-decoration: underline;}
 .mList h3 span{display: inline-block; width: 10px; margin-right: 8px; cursor: pointer;}
 .mList dl{text-indent: 3em;}
 .mList a{color: #FFF;font:12px/2 "微软雅黑"; display: block;}
+#serverManagerLink{font:14px/2 ""; cursor: pointer;}
 .icon{padding-left: 18px; background-position: left center; background-repeat: no-repeat;}
 .icon_i{background-image: url(../images/icon/i.png);}
 .icon_j{background-image: url(../images/icon/j.png);}

@@ -25,7 +25,7 @@ $row = pg_fetch_array($result);
         <meta charset="utf-8" />
         <title>摄像机标定</title>
         <link href="css/main.css" rel="stylesheet" type="text/css" />
-        <script type="text/javascript" src="js/jquery-1.5.2.min.js"></script>
+        <script type="text/javascript" src="./scripts/jquery-1.11.2.min.js"></script>
         <script type="text/javascript" src="js/script.js"></script>
 	<script type="text/javascript" src="js/OpenLayers.js"></script>
     </head>

@@ -8,7 +8,7 @@
   <title>视频列表</title>
   <link href="styles/listVideo.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src = "../scripts/OpenLayers.debug.js"></script>
-  <script type="text/javascript" src ="../scripts/jquery-1.4.1.min.js"></script>
+  <script type="text/javascript" src ="./scripts/jquery-1.11.2.min.js"></script>
   <script type="text/javascript" src ="../scripts/MapConfig.js"></script>
   <script type="text/javascript" src ="../scripts/camera.js"></script>
   <script type="text/javascript" src="../scripts/video.js"></script>

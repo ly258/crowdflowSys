@@ -9,7 +9,7 @@ $row=fetchOne($link, $sql);
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<title>Insert title here</title>
-	<script type="text/javascript" src ="./scripts/jquery-1.6.4.js"></script>
+	<script type="text/javascript" src ="./scripts/jquery-1.11.2.min.js"></script>
 	<script>
 		function init(type)
 		{

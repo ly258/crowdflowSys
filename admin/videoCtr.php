@@ -29,7 +29,7 @@
 	}
 	</style>
 	<script type="text/javascript" src="./scripts/OpenLayers.debug.js"></script>
-	<script type="text/javascript" src ="./scripts/jquery-1.6.4.js"></script>
+	<script type="text/javascript" src ="./scripts/jquery-1.11.2.min.js"></script>
 	<script type="text/javascript" src ="../scripts/MapConfig.js"></script>
 	<script type="text/javascript" src ="../scripts/camera.js"></script>
 	<script type="text/javascript" src ="../scripts/video.js"></script>

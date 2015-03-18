@@ -72,6 +72,9 @@ checklogined();
                         <dd><a href="setMeasureCoor.php" target="mainFrame">坐标系设置</a></dd>
                         </dl>
                     </li>
+                    <li>
+                        <h3 onclick="show('menu5','change5')"><a id="serverManagerLink" href="serverManager.php" target="mainFrame"><span id="change5">+</span>服务器管理工具</a></h3>                       
+                    </li>
                 </ul>
             </div>
         </div>
