@@ -13,4 +13,5 @@ require_once 'commen.func.php';
 require_once 'pgsql.func.php';
 require_once 'page.func.php';
 require_once 'camera.inc.php';
+require_once 'getServer.php';
 $link=connect();

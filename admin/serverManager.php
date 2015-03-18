@@ -13,29 +13,20 @@
 </head>
 <body>
   <h1>服务器列表</h1>
-  <div id="data" class="demo"></div>
+  <div id="data" class="demo2"></div>
 
   <script src="./scripts/jquery-1.11.2.min.js"></script>
   <script src="./styles/jstree.min.js"></script> 
   <script>
-  // html demo
-  $('#html').jstree();
-
-  // inline data demo
-  $('#data').jstree({
-    'core' : {
-      'data' : [
-        { "text" : "127.0.0.1", "children" : [
-            { "text" : "32040451991311000098" },
-            { "text" : "32040451991311000099" }
-        ]},
-        { "text" : "128.0.0.1", "children" : [
-            { "text" : "32040451991311000098" },
-            { "text" : "32040451991311000099" }
-        ]}
-      ]
-    }
-  });
+  //ajax demo
+	$('#data').jstree({
+		'core' : {
+			'data' : {
+				"url" : "doServerAction.php?act=getServerName",
+				"dataType" : "json" // needed only if you do not supply JSON headers
+			}
+		}
+	});
   </script>
 </body>
 </html>
