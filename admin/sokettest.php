@@ -10,6 +10,6 @@
     echo $result;
     socket_close($sock); */
     $connection = array('ip'=>'127.0.0.1','port'=>'8000');
-    $XML = serverCommand($connection,"get videos");
-    print_r(parseXML($XML));
+    $XML = serverCommand($connection,"start");
+    print_r($XML);
 ?>
