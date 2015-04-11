@@ -36,7 +36,7 @@
 		
 	}
 	/*************************************************
-	*查询人数
+	*查询人数及方向
 	*function searchPeople($link,$queryFilter)
 	*************************************************/
 	function searchPeople($link,$queryFilter){
@@ -68,8 +68,10 @@ EOF;
 		$redis = new redis();  
 		$redis->connect('127.0.0.1', 6379);  
 		$cameraid = array();
-		array_push($cameraid,$redis->lget('cameraid',0));
-		array_push($cameraid,$redis->lget('cameraid',1));
+	    for($i=0;$i<$redis->lsize("cameraid");$i++)
+	    {
+	        array_push($cameraid,$redis->lget('cameraid',$i));
+	    }
 
 		//构造GeoJson
 		$cameraGeoJson = array("type"=>"FeatureCollection","features"=>array());
@@ -121,8 +123,10 @@ EOF;
 				$transForm->ccdWidth = $value["ccd_width"];
 				$transForm->ccdHeight = $value["ccd_height"];
 				$feature["properties"]["people"] = array();
+				$feature["properties"]["startpoint"] = array();
+				$feature["properties"]["endpoint"] = array();
 				//变换为地理坐标
-				//$coord = array();
+				//查询人群坐标;
 				for($i=0;$i<$redis->lsize($value["id"]."@X");$i++){
 					$coord = array("x"=>$redis->lget($value["id"]."@X",$i),"y"=>$redis->lget($value["id"]."@Y",$i));
 					$coord = $transForm->trans($coord);
@@ -130,12 +134,26 @@ EOF;
 					//print_r($redis->lget($value["id"]."@X",$i));
 					array_push($feature["properties"]["people"], $coord);
 				}
+				//查询人群方向坐标
+				for($i=0;$i<$redis->lsize($value["id"]."@startX");$i++){
+				    $directionStartCoord = array("x"=>$redis->lget($value["id"]."@startX",$i),"y"=>$redis->lget($value["id"]."@startY",$i));
+				    $directionStartCoord = $transForm->trans($directionStartCoord);
+				    $directionEndCoord = array("x"=>$redis->lget($value["id"]."@endX",$i),"y"=>$redis->lget($value["id"]."@endY",$i));
+				    $directionEndCoord = $transForm->trans($directionEndCoord);
+				    //echo($directionEndCoord);
+				    //print_r($directionEndCoord);
+				    array_push($feature["properties"]["startpoint"], $directionStartCoord);
+				    array_push($feature["properties"]["endpoint"], $directionEndCoord);
+				}
 			}else{
 				$feature["properties"]["num"] = -1;
 				$feature["properties"]["people"] = array();
+				$feature["properties"]["startpoint"] = array();
+				$feature["properties"]["endpoint"] = array();
 			}
+
 			array_push($cameraGeoJson["features"],$feature);
 		}
-		//return $coord;
+		//return $directionStartCoord;
 		return json_encode($cameraGeoJson);
 	}

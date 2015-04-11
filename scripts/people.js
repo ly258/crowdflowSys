@@ -150,6 +150,7 @@ OpenLayers.People.Prase=function(cGeoJson){
 		return cameras;
 };
 
+//人数列表与人群实时联动
 OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	queue:null,
 	totalNumDynachart:null,
@@ -366,6 +367,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	}
 });
 
+//人群时空分布刷新
 OpenLayers.peopleDistribution = OpenLayers.Class({
 	map:null,
 	cameras:null,
@@ -412,6 +414,7 @@ OpenLayers.peopleDistribution = OpenLayers.Class({
 	},
 });
 
+//实时监控视频窗口拖动
 OpenLayers.realmonitorDrag = OpenLayers.Class({
 	oTitle:null,
 	oDrag:null,
@@ -448,6 +451,7 @@ OpenLayers.realmonitorDrag = OpenLayers.Class({
      },
 });
 
+//实时视频播放
 OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	vlcPlayer:null,
 	targetURL:"",
