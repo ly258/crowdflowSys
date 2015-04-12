@@ -34,7 +34,9 @@
 				peopleQueryer.query();
 
 				var peopleDistribution = new OpenLayers.peopleDistribution();
+				var peopleDirection = new OpenLayers.peopleDirection();
 				peopleList.peopleDistribution = peopleDistribution;
+				peopleList.peopleDirection = peopleDirection;
 				peopleCollection.peopleList = peopleList;
 
 				$("#rect").attr("disabled","true");
@@ -44,9 +46,8 @@
 				var queue = peopleList.queue;
 				for (var i = 0; i < 4; i++) {
 					$("#select"+queue.base[i]).val("1");
-				};				
+				};								
 				
-				$(window).resize(layerOut);
 				layerOut();
                 var Dynacharts = new Array();
                 for (var i = 1; i < 5; i++) {
@@ -74,10 +75,17 @@
 
 				//var Drag = new OpenLayers.RDrag($('#videoPlayer').get(0));
 				var Drag = new OpenLayers.realmonitorDrag($('#videoTitle').get(0));
+
+				$(window).resize(layerOut);
 			}			
 		//布局初始化
 		function layerOut(){
-			   $("#rsList").css("height",$(".tocContainer").height()-$("#rsup").height());
+			   $("#rsList").css("height",$(".tocContainer").height()-$("#rsup").height());			   
+			   $("#curvegraphmain").css("width",$(window).width()/5);
+			   $("#curvegraph01").css("width",$(window).width()/5);
+			   $("#curvegraph02").css("width",$(window).width()/5);
+			   $("#curvegraph03").css("width",$(window).width()/5);
+			   $("#curvegraph04").css("width",$(window).width()/5-25);
 			   $("#map").css("height",$(".mapContainer").height()-$("#controls").height());
 		}          		              
         function selectchangeable(i)
@@ -103,32 +111,14 @@
        		$(".tendency").css("color","#000000");
        		$(".unusual").css("color","#000000");
         }
-        function cluster()
-        {
-       		peopleList.analysisMode = 3;
-       		$(".realtime_monitoring").css("color","#000000");
-       		$(".st_distribution").css("color","#000000");
-       		$(".cluster").css("color","blue");
-       		$(".tendency").css("color","#000000");
-       		$(".unusual").css("color","#000000");
-        }
         function tendency()
         {
-       		peopleList.analysisMode = 4;
+       		peopleList.analysisMode = 3;
        		$(".realtime_monitoring").css("color","#000000");
        		$(".st_distribution").css("color","#000000");
        		$(".cluster").css("color","#000000");
        		$(".tendency").css("color","blue");
        		$(".unusual").css("color","#000000");
-        }
-        function unusual()
-        {
-       		peopleList.analysisMode = 5;
-       		$(".realtime_monitoring").css("color","#000000");
-       		$(".st_distribution").css("color","#000000");
-       		$(".cluster").css("color","#000000");
-       		$(".tendency").css("color","#000000");
-       		$(".unusual").css("color","blue");
         }
         function ifareasetting()
         {
@@ -198,9 +188,7 @@
 			<div id="controls">
 				<div onclick="realtime_monitoring()" class="realtime_monitoring">实时监控</div>
 				<div onclick="st_distribution()" class="st_distribution">时空分布</div>
-				<div onclick="cluster()" class="cluster">聚类分析</div>
 				<div onclick="tendency()" class="tendency">运动趋势</div>
-				<div onclick="unusual()" class="unusual">异常探测</div>
 			</div>
 			<div id="map"></div>
 		</div>
@@ -216,19 +204,19 @@
 			</tr>
 			<tr>
 				<td>
-					<div id="curvegraphmain" style="min-width:300px;height:160px;"></div>
+					<div id="curvegraphmain" style="height:160px;"></div>
 				</td>
 				<td>
-					<div id="curvegraph01" style="min-width:320px;height:160px;"></div>
+					<div id="curvegraph01" style="height:160px;"></div>
 				</td>
 				<td>
-					<div id="curvegraph02" style="min-width:320px;height:160px;"></div>
+					<div id="curvegraph02" style="height:160px;"></div>
 				</td>
 				<td>
-					<div id="curvegraph03" style="min-width:320px;height:160px;"></div>
+					<div id="curvegraph03" style="height:160px;"></div>
 				</td>
 				<td>
-					<div id="curvegraph04" style="min-width:310px;height:160px;"></div>
+					<div id="curvegraph04" style="height:160px;"></div>
 				</td>
 			</tr>
 		</table>

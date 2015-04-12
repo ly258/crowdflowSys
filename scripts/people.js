@@ -145,6 +145,8 @@ OpenLayers.People.Prase=function(cGeoJson){
 			camera.number = featureCollection[i].data.num;
 			camera.peoplePosition = featureCollection[i].data.people;
 			camera.alarm = featureCollection[i].data.alarm;
+			camera.startpoint = featureCollection[i].data.startpoint;
+			camera.endpoint = featureCollection[i].data.endpoint;
 			cameras.push(camera);
 		}
 		return cameras;
@@ -157,6 +159,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	Dynacharts:null,
 	peopleCollection:null,
 	peopleDistribution:null,
+	peopleDirection:null,
 	map:null,
 	analysisMode:null,
 	selectGeometry:null,
@@ -334,7 +337,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 					that.tempNum = 0;
 				}
 				that.totalNumDynachart.addTotalNumPoint(that.areaPeoNum,that.totalAlarm);
-				for (var i = 0; i < 2; i++) {
+				for (var i = 0; i < that.queue.size(); i++) {
 					$("#curvegraphheader0"+(i+1)).html(cameras[that.queue.base[i]].name);
 					that.Dynacharts[i].addPoint(cameras[that.queue.base[i]]);
 				};
@@ -344,6 +347,10 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 						if(that.peopleDistribution.map!=null)
 						{
 							that.peopleDistribution.detach();
+						}
+						if(that.peopleDirection.map!=null)
+						{
+							that.peopleDirection.detach();
 						}						
 						that.peopleCollection.setCameras(cameras);
 						that.peopleCollection.update();
@@ -353,10 +360,26 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 						{
 							that.peopleDistribution.attach(that.map);
 						}
+						if(that.peopleDirection.map!=null)
+						{
+							that.peopleDirection.detach();
+						}
 						that.peopleCollection.setCameras(cameras);
 						that.peopleCollection.update();
 						that.peopleDistribution.cameras = cameras;
 						that.peopleDistribution.update();
+						break;
+					case 3:
+						if(that.peopleDirection.map==null)
+						{
+							that.peopleDirection.attach(that.map);
+						}
+						if(that.peopleDistribution.map!=null)
+						{
+							that.peopleDistribution.detach();
+						}
+						that.peopleDirection.cameras = cameras;
+						that.peopleDirection.update();
 						break;
 				}			
 			},
@@ -410,6 +433,53 @@ OpenLayers.peopleDistribution = OpenLayers.Class({
 		if(!this.map) return;
 
 		this.map.removeLayer(this.peopleDistributionLayer);
+		this.map = null;
+	},
+});
+
+//人群方向刷新
+OpenLayers.peopleDirection = OpenLayers.Class({
+	map:null,
+	cameras:null,
+	peopleDirectionLayer:null,
+	initialize : function(){
+		var peopleDirectionLayer = new OpenLayers.Layer.Vector("运动趋势",{
+			styleMap : new OpenLayers.StyleMap({'default':{
+				strokeColor: "#00FF00", 
+				strokeWidth: 3, 
+				strokeDashstyle: "solid", 
+				strokeLinecap: "square"
+			}})
+		});
+		this.peopleDirectionLayer = peopleDirectionLayer;
+	},
+	update : function(){
+		this.peopleDirectionLayer.removeAllFeatures();
+		var cameras = this.cameras;
+		var linecollection = new Array();
+		var pointlist = [];
+		for(var i=0;i<cameras.length;i++)
+			for(var j=0;j<cameras[i].startpoint.length;j++)
+			{
+				var st = new OpenLayers.Geometry.Point(this.cameras[i].startpoint[j].x,this.cameras[i].startpoint[j].y); 
+		    	var end = new OpenLayers.Geometry.Point(this.cameras[i].endpoint[j].x,this.cameras[i].endpoint[j].y);
+		    	pointlist.splice(0,pointlist.length);
+				pointlist.push(MapConfig.transform(st));
+				pointlist.push(MapConfig.transform(end));
+
+				var lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointlist),null,null);
+				linecollection.push(lineFeature);			
+			}	
+			this.peopleDirectionLayer.addFeatures(linecollection);	
+	},
+	attach : function(map){
+		map.addLayers([this.peopleDirectionLayer]);
+		this.map = map;
+	},
+	detach : function(){
+		if(!this.map) return;
+
+		this.map.removeLayer(this.peopleDirectionLayer);
 		this.map = null;
 	},
 });

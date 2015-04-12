@@ -17,7 +17,7 @@
 		<td><input id="serverPort" type="text" name="port" placeholder="请输入服务器端口" /></td>
 	</tr>
 	<tr>
-		<td colspan="2"><input type="button" onclick=testServer()  value="测试连接"/><input id="addServerButton" type="submit" disabled=true value="添加连接"/><input type="button"  value="返回"/></td>
+		<td colspan="2"><input type="button" onclick=testServer()  value="测试连接"/><input onclick=addServer() id="addServerButton" type="button" disabled=true value="添加连接"/><input onclick=returnServerManager() type="button"  value="返回"/></td>
 	</tr>
 
 </table>
@@ -43,6 +43,31 @@
              	   alert("连接失败");
             }
         });
+	}
+
+	function addServer()
+	{
+		ip = document.getElementById("serverIp").value;
+		port = parseInt(document.getElementById("serverPort").value);
+		$.ajax({
+			url:"doServerAction.php?act=addServer",
+			data:{ip:this.ip,port:this.port},
+			type:"post",
+			success:function(data)
+			{
+			   	if(data=="addSuccess")
+			   	{
+			   		alert("添加成功");
+				}
+			   	else
+	             	alert("添加失败");
+		    }
+		});
+	}
+
+	function returnServerManager()
+	{
+		window.location = "serverManager.php";
 	}
 </script>
 </body>

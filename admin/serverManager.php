@@ -1,3 +1,11 @@
+<?php
+require_once '../include.php';
+checklogined();
+$sql = "select * from videocms_server";
+$rows = fetchAll($link, $sql);
+if(!$rows)
+    alertMes("没有服务器，请添加！", "addServer.php");
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +17,7 @@
 <body>
   <h1>服务器列表</h1>
   <div id="list" class="serverlist"></div>
-  <div id="detail" class="serverdetail">
+  <!-- <div id="detail" class="serverdetail"> -->
   </div>
 
   <script src="./scripts/jquery-1.11.2.min.js"></script>
@@ -95,9 +103,12 @@
                         window.location = "addServer.php";
                     }
                     },
-                "删除服务器": {  
-                    "label": "删除服务器",  
-                    "action": function(obj) { alert(obj) } 
+                    "删除服务器": {  
+                        "label": "删除服务器",  
+                        "action": function(obj) { 
+                        	address = this.getServerAddress(obj);
+                       	    window.location = "doServerAction.php?act=deleteServer&ip="+address[0]+"&port="+address[1];
+                        },
                     },
                 },
         "select_node" :false, 

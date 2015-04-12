@@ -140,8 +140,7 @@ div .rsContent{
 
 .curvegraphmainheader{
 	background-color: #bfbfbf;
-	height: 30px;
-	width:300px;
+	height: 30px;	
 	text-align: center;
 }
 
@@ -179,7 +178,7 @@ div .rsContent{
 	cursor: pointer;
 }
 
-.cluster{
+/*.cluster{
 	float: left;
 	margin:5px 15px 5px 15px;
 	font-size: 17px;
@@ -188,7 +187,7 @@ div .rsContent{
 
 .cluster:hover{
 	cursor: pointer;
-}
+}*/
 
 .tendency{
 	float: left;
@@ -201,7 +200,7 @@ div .rsContent{
 	cursor: pointer;
 }
 
-.unusual{
+/*.unusual{
 	float: left;
 	margin:5px 15px 5px 15px;
 	font-size: 17px;
@@ -210,7 +209,7 @@ div .rsContent{
 
 .unusual:hover{
 	cursor: pointer;
-}
+}*/
 div#videoPlayer{
   	background-color:#4b6c9e;
   	width:500px;
