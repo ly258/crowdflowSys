@@ -108,7 +108,11 @@ function getResultNum($link,$sql){
     return pg_num_rows($result);
 }
 
-
+/**
+ * 执行SQL语句，并返回结果
+ * @param unknown_type $sql
+ * @return number
+ */
 function query($link,$sql) 
 { 
     $result=pg_query($link,$sql); 

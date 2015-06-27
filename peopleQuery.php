@@ -1,6 +1,6 @@
 <?php
 	include_once("./include.php");
-	include_once("./core/people2.inc.php");
+	include_once("./core/people.inc.php");
 	
 	$filter = new CameraQueryFilter();
 	if(!empty($_POST)){

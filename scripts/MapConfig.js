@@ -48,9 +48,9 @@ var MapConfig = {
 		return map;
 	},
 	transform:function(geomerty){
-		return geomerty.transform('EPSG:900913','EPSG:4326');
+		return geomerty.clone().transform('EPSG:900913','EPSG:4326');
 	},
 	rTransform:function(geomerty){
-		return geomerty.transform('EPSG:4326','EPSG:900913');
+		return geomerty.clone().transform('EPSG:4326','EPSG:900913');
 	}
 };

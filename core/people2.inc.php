@@ -65,8 +65,8 @@ EOF;
 		$cameras = fetchAll($link,$sql);			
 		
 		//查选人数rst
-		$redis = new redis();  
-		$redis->connect('127.0.0.1', 6379);  
+		$redis = new redis(); 		
+		$redis->connect('223.2.41.221', 6379); 
 		$cameraid = array();
 	    for($i=0;$i<$redis->lsize("cameraid");$i++)
 	    {
@@ -133,6 +133,7 @@ EOF;
 					//echo($coord);
 					//print_r($redis->lget($value["id"]."@X",$i));
 					array_push($feature["properties"]["people"], $coord);
+                    //echo $redis->lget($value["id"]."@X",$i);
 				}
 				//查询人群方向坐标
 				for($i=0;$i<$redis->lsize($value["id"]."@startX");$i++){

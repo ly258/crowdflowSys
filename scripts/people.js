@@ -147,6 +147,7 @@ OpenLayers.People.Prase=function(cGeoJson){
 			camera.alarm = featureCollection[i].data.alarm;
 			camera.startpoint = featureCollection[i].data.startpoint;
 			camera.endpoint = featureCollection[i].data.endpoint;
+            camera.index = i;
 			cameras.push(camera);
 		}
 		return cameras;
@@ -337,7 +338,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 					that.tempNum = 0;
 				}
 				that.totalNumDynachart.addTotalNumPoint(that.areaPeoNum,that.totalAlarm);
-				for (var i = 0; i < that.queue.size(); i++) {
+				for (var i = 0; i < 4; i++) {
 					$("#curvegraphheader0"+(i+1)).html(cameras[that.queue.base[i]].name);
 					that.Dynacharts[i].addPoint(cameras[that.queue.base[i]]);
 				};
@@ -378,6 +379,8 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 						{
 							that.peopleDistribution.detach();
 						}
+						that.peopleCollection.setCameras(cameras);
+						that.peopleCollection.update();
 						that.peopleDirection.cameras = cameras;
 						that.peopleDirection.update();
 						break;
@@ -446,7 +449,7 @@ OpenLayers.peopleDirection = OpenLayers.Class({
 		var peopleDirectionLayer = new OpenLayers.Layer.Vector("运动趋势",{
 			styleMap : new OpenLayers.StyleMap({'default':{
 				strokeColor: "#00FF00", 
-				strokeWidth: 3, 
+				strokeWidth: 2, 
 				strokeDashstyle: "solid", 
 				strokeLinecap: "square"
 			}})
@@ -457,20 +460,55 @@ OpenLayers.peopleDirection = OpenLayers.Class({
 		this.peopleDirectionLayer.removeAllFeatures();
 		var cameras = this.cameras;
 		var linecollection = new Array();
+		var polygoncolllection = new Array();
+		var ptsArr = new Array();
 		var pointlist = [];
+		var style_polygon = {
+		                strokeColor: "#00FF00",
+		                strokeWidth: 2,
+		                strokeOpacity: 0.8,
+		                fillOpacity: 0.8,
+		                fillColor: "#00FF00",
+		        };
 		for(var i=0;i<cameras.length;i++)
 			for(var j=0;j<cameras[i].startpoint.length;j++)
 			{
 				var st = new OpenLayers.Geometry.Point(this.cameras[i].startpoint[j].x,this.cameras[i].startpoint[j].y); 
 		    	var end = new OpenLayers.Geometry.Point(this.cameras[i].endpoint[j].x,this.cameras[i].endpoint[j].y);
-		    	pointlist.splice(0,pointlist.length);
+		    	var angle;//计算旋转角度
+				var temp = Math.sqrt((end.y-st.y)*(end.y-st.y)+(end.x-st.x)*(end.x-st.x));
+				if((end.y-st.y)>0&&(end.x-st.x)>0)//第一象限
+					angle = Math.asin((end.x-st.x)/temp);
+				else if((end.y-st.y)>0&&(end.x-st.x)<0)//第四象限
+					angle = 2*Math.PI+Math.asin((end.x-st.x)/temp);
+				else if((end.y-st.y)<0&&(end.x-st.x)>0)//第二象限
+					angle = Math.acos((end.y-st.y)/temp);
+				else if((end.y-st.y)<0&&(end.x-st.x)<0)//第三象限
+					angle = Math.PI-Math.asin((end.x-st.x)/temp);
+
+				var end02 = new OpenLayers.Geometry.Point(0*Math.cos(angle)-10*Math.sin(-angle)+st.x,0*Math.sin(-angle)+10*Math.cos(-angle)+st.y);
+				pointlist.splice(0,pointlist.length);
 				pointlist.push(MapConfig.transform(st));
-				pointlist.push(MapConfig.transform(end));
+				pointlist.push(MapConfig.transform(end02));
 
 				var lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointlist),null,null);
-				linecollection.push(lineFeature);			
+				linecollection.push(lineFeature);
+
+				ptsArr.splice(0,ptsArr.length);
+				ptsArr.push(MapConfig.transform(new OpenLayers.Geometry.Point(0*Math.cos(angle)-10*Math.sin(-angle)+st.x,0*Math.sin(-angle)+10*Math.cos(-angle)+st.y)));
+				ptsArr.push(MapConfig.transform(new OpenLayers.Geometry.Point(-2*Math.cos(angle)-8*Math.sin(-angle)+st.x,-2*Math.sin(-angle)+8*Math.cos(-angle)+st.y)));
+				ptsArr.push(MapConfig.transform(new OpenLayers.Geometry.Point(2*Math.cos(angle)-8*Math.sin(-angle)+st.x,2*Math.sin(-angle)+8*Math.cos(-angle)+st.y)));
+
+				var linearRing = new OpenLayers.Geometry.LinearRing(ptsArr);
+				var polygon = new OpenLayers.Geometry.Polygon([linearRing]);
+		        
+		        polygonFeature = new OpenLayers.Feature.Vector(polygon,null,style_polygon);
+		        polygoncolllection.push(polygonFeature);
+		        //this.peopleDirectionLayer.addFeatures([polygonFeature]);			
 			}	
-			this.peopleDirectionLayer.addFeatures(linecollection);	
+			this.peopleDirectionLayer.addFeatures(linecollection);
+			this.peopleDirectionLayer.addFeatures(polygoncolllection);	
+
 	},
 	attach : function(map){
 		map.addLayers([this.peopleDirectionLayer]);

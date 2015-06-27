@@ -36,6 +36,7 @@ OpenLayers.FovType = {
 //摄像机类
 OpenLayers.Camera = OpenLayers.Class({
     id:null,
+    index:null,
 	name:null,
     ip:null,
     avpath:null,
