@@ -12,7 +12,7 @@
 	<script type="text/javascript" src="./scripts/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="./scripts/highcharts.js"></script>
 	<script type="text/javascript" src="./scripts/chart.js"></script>
-	<script type="text/javascript" src="./scripts/people.js"></script>
+	<script type="text/javascript" src="./scripts/people2.js"></script>
 	<script type="text/javascript">
 			var peopleList;
 			var analysisMode,peopleQueryer,map;
@@ -21,32 +21,33 @@
 				var chart;
 				map = MapConfig.createMap("map");			
 
-				var vlc = document.getElementById("vlc");
-				var peopleCollection = new OpenLayers.peopleCollection([],vlc);
-				//peopleCollection.play();
+				//var vlc = document.getElementById("vlc");
+				//var peopleCollection = new OpenLayers.peopleCollection([],vlc);
 
-				peopleCollection.attach(map);
+				//peopleCollection.attach(map);
 				peopleList = new OpenLayers.peopleList("rsList");
-				peopleList.peopleCollection = peopleCollection;
+				//peopleList.peopleCollection = peopleCollection;
 				peopleList.map = map;
 				peopleList.analysisMode = 1;
-				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,peopleCollection);
+				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList);
 				peopleQueryer.query();
 
-				var peopleDistribution = new OpenLayers.peopleDistribution();
-				var peopleDirection = new OpenLayers.peopleDirection();
-				peopleList.peopleDistribution = peopleDistribution;
-				peopleList.peopleDirection = peopleDirection;
-				peopleCollection.peopleList = peopleList;
+				peopleViewer = new OpenLayers.peopleViewer(peopleList);
+
+				//var peopleDistribution = new OpenLayers.peopleDistribution();
+				//var peopleDirection = new OpenLayers.peopleDirection();
+				//peopleList.peopleDistribution = peopleDistribution;
+				//peopleList.peopleDirection = peopleDirection;
+				//peopleCollection.peopleList = peopleList;
 
 				$("#rect").attr("disabled","true");
         		$("#polygon").attr("disabled","true");
         		$("#totalAlarm").attr("disabled","true");
 
-				var queue = peopleList.queue;
-				for (var i = 0; i < 4; i++) {
-					$("#select"+queue.base[i]).val("1");
-				};								
+				//var queue = peopleList.queue;
+				//for (var i = 0; i < 4; i++) {
+					//$("#select"+queue.base[i]).val("1");
+				//};								
 				
 				layerOut();
                 var Dynacharts = new Array();
@@ -63,7 +64,7 @@
                 totalNumDynachart.loadchart("curvegraphmain");
                 peopleList.totalNumDynachart = totalNumDynachart;
                 
-				setInterval('peopleList.linkage()',2000); 
+				setInterval('peopleViewer.notify()',2000); 
 
 				$("#totalAlarm").keypress(function(e){
   					code = (e.keyCode ? e.keyCode : e.which);
@@ -74,7 +75,7 @@
 				});   
 
 				//var Drag = new OpenLayers.RDrag($('#videoPlayer').get(0));
-				var Drag = new OpenLayers.realmonitorDrag($('#videoTitle').get(0));
+				//var Drag = new OpenLayers.realmonitorDrag($('#videoTitle').get(0));
 
 				$(window).resize(layerOut);
 			}			

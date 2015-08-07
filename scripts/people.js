@@ -601,7 +601,7 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	        }
 	    }
 	},
-	renderCamera:function(camera){
+	renderCamera : function(camera){
 		var peopleList = this.peopleList;
 		this._cameraLayer.addMarker(camera.marker);
 
@@ -650,5 +650,56 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 			}
 		}
 		this._fovLayer.addFeatures([camera.fov]);
+	},
+});
+
+//观察者列表类
+OpenLayers.ObserverList = OpenLayers.Class({
+	observerList:[],
+	Add : function(obj){
+		return this.observerList.push(obj);
+	},
+	Empty : function(){
+		this.observerList = [];
+	},
+	Count : function(){
+		return this.observerList.length;
+	},
+	Get : function(index){
+		if (index > -1 && index < this.observerList.length) {
+			return this.observerList[index];
+		}
+	},
+	IndexOf : function(obj, startIndex){
+		var i = startIndex, pointer = -1;
+
+		while (i < this.observerList.length) {
+			if (this.observerList[i] === obj) {
+				pointer = i;
+				break;
+			}
+			i++;
+		}
+
+		return pointer;
+	},
+});
+
+OpenLayers.Subject = OpenLayers.Class({
+	observers:null,
+	initialize:function(){
+		this.observers = new OpenLayers.ObserverList();
+	},
+	AddObserver:function(observer){
+		this.observers.Add(observer);
+	},
+	RemoveObserver:function(observer){
+		this.observers.RemoveIndexAt(this.observers.IndexOf(observer, 0));
+	},
+	Notify:function(){
+		var observerCount = this.observers.Count();
+		for (var i = 0; i < observerCount; i++) {
+			this.observers.Get(i).Update();
+		}
 	},
 });
