@@ -22,12 +22,13 @@
 				map = MapConfig.createMap("map");			
 
 				var vlc = document.getElementById("vlc");
-				var peopleCollection = new OpenLayers.peopleCollection([],vlc);
+				var vlcPlayer = new OpenLayers.videoPlayer(vlc);
+				var peopleCollection = new OpenLayers.peopleCollection([],vlcPlayer);
 				peopleCollection.attach(map);
 
-				peopleChart = new OpenLayers.peopleChart();
+				peopleChart = new OpenLayers.peopleChart("curvegraphheader");
 
-				peopleList = new OpenLayers.peopleList("rsList",peopleChart);
+				peopleList = new OpenLayers.peopleList("rsList",peopleChart,"presentpeonum");
 
 				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList);
 				peopleQueryer.query();
@@ -74,7 +75,7 @@
   					}
 				});   
 
-				//var Drag = new OpenLayers.RDrag($('#videoPlayer').get(0));
+				var Drag = new OpenLayers.RDrag($('#videoPlayer').get(0));
 				//var Drag = new OpenLayers.realmonitorDrag($('#videoTitle').get(0));
 
 				$(window).resize(layerOut);
@@ -198,10 +199,10 @@
 		<table width='100%' height='100%'>
 			<tr height='30px'>
 				<th id="curvegraphheader" class="curvegraphmainheader">区域总人数时空曲线</th>
-				<th id="curvegraphheader01" class="curvegraphheader">时空曲线-C1</th>
-				<th id="curvegraphheader02" class="curvegraphheader">时空曲线-C2</th>
-				<th id="curvegraphheader03" class="curvegraphheader">时空曲线-C3</th>
-				<th id="curvegraphheader04" class="curvegraphheader">时空曲线-C4</th>
+				<th id="curvegraphheader1" class="curvegraphheader">时空曲线-C1</th>
+				<th id="curvegraphheader2" class="curvegraphheader">时空曲线-C2</th>
+				<th id="curvegraphheader3" class="curvegraphheader">时空曲线-C3</th>
+				<th id="curvegraphheader4" class="curvegraphheader">时空曲线-C4</th>
 			</tr>
 			<tr>
 				<td>

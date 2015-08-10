@@ -153,10 +153,12 @@ OpenLayers.People.Prase=function(cGeoJson){
 //摄像机列表
 OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	peopleChart:null,//人群数量变化折线图
+	presentpeonumContainerName:null,
 
-	initialize:function(name,peopleChart){
+	initialize:function(name,peopleChart,presentpeonumContainerName){
 		this.container = $("#"+name);
 		this.peopleChart = peopleChart;
+		this.presentpeonumContainerName = presentpeonumContainerName;
 		//this.defaultStyle();
 	},
 	
@@ -275,15 +277,15 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		for (var i = 0; i < cameras.length; i++) {
 			if(cameras[i].number==-1)
 			{
-				$("#presentpeonum"+i).text("当前人数：未做统计");
+				$("#"+this.presentpeonumContainerName+i).text("当前人数：未做统计");
 			}else{
 				if(cameras[i].number>cameras[i].alarm)
 				{
-					$("#presentpeonum"+i).html("<b style='color:red;'>当前人数："+cameras[i].number+"</b>");
+					$("#"+this.presentpeonumContainerName+i).html("<b style='color:red;'>当前人数："+cameras[i].number+"</b>");
 				}
 				else
 				{
-					$("#presentpeonum"+i).html("<b>当前人数："+cameras[i].number+"</b>");
+					$("#"+this.presentpeonumContainerName+i).html("<b>当前人数："+cameras[i].number+"</b>");
 				}
 			}
 		}	
@@ -292,6 +294,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 
 //摄像机人群数量统计折线图
 OpenLayers.peopleChart = OpenLayers.Class({
+	container:null,
 	queue:null,
 	totalNumDynachart:null,
 	totalPeopleCountMode:"whole",
@@ -301,7 +304,8 @@ OpenLayers.peopleChart = OpenLayers.Class({
 	selectGeometry:null,
 	Dynacharts:null,
 
-	initialize:function(){
+	initialize:function(name){
+		this.container = name;
 		if(this.queue == null)
 			this.queue = new CycleQueue();
 	},
@@ -342,24 +346,19 @@ OpenLayers.peopleChart = OpenLayers.Class({
 		}
 		this.totalNumDynachart.addTotalNumPoint(this.areaPeoNum,this.totalAlarm);
 		for (var i = 0; i < 4; i++) {
-			$("#curvegraphheader0"+(i+1)).html(cameras[this.queue.base[i]].name);
+			$("#" + this.container + (i+1)).html(cameras[this.queue.base[i]].name);
 			this.Dynacharts[i].addPoint(cameras[this.queue.base[i]]);
 		};
 	},
 });
 
-//摄像机点位图&实时监控
-OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
+//实时视频播放器
+OpenLayers.videoPlayer = OpenLayers.Class({
 	vlcPlayer:null,
 	targetURL:"",
-	peopleList:null,
-	initialize : function(cameras,videoPlayer,peopleList){
-		this._cameras = cameras;
-		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
-		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
-		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
+
+	initialize : function(videoPlayer){
 		this.vlcPlayer = videoPlayer;
-		this.peopleList = peopleList;
 	},
 	play : function(url){
 		$("#videoPlayer").show();
@@ -390,13 +389,81 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	        }
 	    }
 	},
+});
+
+/**
+ * OpenLayers.RDrag 
+ * 拖拽控件
+ */
+OpenLayers.RDrag = OpenLayers.Class({
+	o: null,       
+    initialize: function (o) {
+       o.onmousedown = this.start;
+       o.rDrag = this;
+       o.style.left = '500px';
+       o.style.top = '200px';
+     },
+    start: function (e) {
+       var o;
+       var rDrag = this.rDrag;
+       e = rDrag.fixEvent(e);
+       //e.preventDefault && e.preventDefault();
+       rDrag.o = o = this;
+       o.x = e.clientX - rDrag.o.offsetLeft;
+       o.y = e.clientY - rDrag.o.offsetTop;
+       o.onmousemove = rDrag.move;
+       o.onmouseup = rDrag.end;
+     },
+     move: function (e) {
+     	   var rDrag = this.rDrag;
+           e = rDrag.fixEvent(e);
+           var oLeft, oTop;
+           oLeft = e.clientX - rDrag.o.x;
+           oTop = e.clientY - rDrag.o.y;
+           this.rDrag.o.style.left = oLeft + 'px';
+           this.rDrag.o.style.top = oTop + 'px';
+     },
+     end: function (e) {
+           e = this.rDrag.fixEvent(e);
+           var o = this.rDrag.o;
+           this.rDrag.o = o.onmousemove = o.onmouseup = null;
+     },
+    fixEvent: function (e) {
+           if (!e) {
+               e = window.event;
+               e.target = e.srcElement;
+               e.layerX = e.offsetX;
+               e.layerY = e.offsetY;
+           }
+           return e;
+    }
+});
+
+//摄像机点位图&实时监控
+OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{	
+	videoPlayer:null,
+
+	initialize : function(cameras,videoPlayer){
+		this._cameras = cameras;
+		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
+		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
+		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
+		this.videoPlayer = videoPlayer;
+	},
+
+
+	realtimeVideoSelect : function(camera,isScrollTo){
+		this.videoPlayer.play(camera.avpath);
+		this.select(camera,isScrollTo);
+	},
+	
 	renderCamera : function(camera){
-		var peopleList = this.peopleList;
+		var peopleCollection = this;
 		this._cameraLayer.addMarker(camera.marker);
 
 		camera.marker.camera = camera;		
 		camera.marker.events.register("click",camera.marker,function(evt){	
-				peopleList.realtimeVideoSelect(this.camera,true);  
+				peopleCollection.realtimeVideoSelect(this.camera,true);  
 		});
 		if(camera.number>camera.alarm)
 		{
