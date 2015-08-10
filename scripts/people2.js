@@ -55,7 +55,7 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
         }
 	},
 	query : function(){
-		//系统初始化请求后台数据
+		//系统初始化摄像机列表
 		var peopleList = this.peopleList;
 		$.ajax({
 			type:"POST",
@@ -65,7 +65,7 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
 			success:function(data){
 				var cameras = OpenLayers.People.Prase(data);
 				peopleList.cameras = cameras;
-				peopleList.update();
+				peopleList.updateList();
 			}
 		})
 	},
@@ -106,7 +106,7 @@ OpenLayers.People = OpenLayers.Class(OpenLayers.Camera,{
 	peoplePosition:null
 });
 
-//摄像机解析
+//摄像机解析GeoJson解析
 OpenLayers.People.Prase=function(cGeoJson){
 		var geojson = new OpenLayers.Format.GeoJSON();
 		var featureCollection = geojson.read(cGeoJson);
@@ -150,21 +150,20 @@ OpenLayers.People.Prase=function(cGeoJson){
 		return cameras;
 };
 
-//人数列表与人群实时联动
+//摄像机列表
 OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
-	queue:null,
-	peopleCollection:null,
-	map:null,
-	selectGeometry:null,
-	tempNum:0,
-	areaPeoNum:0,
+	peopleChart:null,//人群数量变化折线图
+
+	initialize:function(name,peopleChart){
+		this.container = $("#"+name);
+		this.peopleChart = peopleChart;
+		//this.defaultStyle();
+	},
 	
 	defaultStyle : function(i){
 		var cameras = this.cameras;
 		var typeName,stateName;//摄像机列表中摄像机类型与摄像机状态
 		var select_curveshow;//控制摄像机列表中是否显示曲线图
-		if(this.queue == null)
-			this.queue = new CycleQueue();
 
 		//判断
 		switch(cameras[i].type){
@@ -198,7 +197,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 					break;
 
 		}
-
+		//各摄像机下人群数量初始化
 		var peonum = (cameras[i].number==-1) ? "未做统计" : cameras[i].number;
 		
 		if(cameras[i].number==-1)
@@ -207,7 +206,8 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		}else
 		{
 			select_curveshow = "";
-			this.queue.enQueue(i);
+			//有人数统计的摄像机入循环队列
+			this.peopleChart.queue.enQueue(i);
 		}
 
 		var style= $("<div id="+i+" class=\"item\" style=\"width:100%;height:110px;cursor:pointer\">"
@@ -243,14 +243,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		return style;
 	},
 
-	updateQueue : function(data){
-		if(this.queue == null)
-			this.queue = new CycleQueue();
-		this.queue.enQueue(data);
-		return this.queue;
-	},
-
-	update:function(){	
+	updateList:function(){	
 		var container = this.container;
 		var cameras = this.cameras;
 		//var cameraCollection = this.cameraCollection;
@@ -278,7 +271,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	    });	
 	},
 
-	linkage : function(cameras){				
+	update : function(cameras){				
 		for (var i = 0; i < cameras.length; i++) {
 			if(cameras[i].number==-1)
 			{
@@ -297,33 +290,201 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	},
 });
 
-//cameraViewer
+//摄像机人群数量统计折线图
+OpenLayers.peopleChart = OpenLayers.Class({
+	queue:null,
+	totalNumDynachart:null,
+	totalPeopleCountMode:"whole",
+	totalAlarm:100,
+	tempNum:0,
+	areaPeoNum:0,
+	selectGeometry:null,
+	Dynacharts:null,
+
+	initialize:function(){
+		if(this.queue == null)
+			this.queue = new CycleQueue();
+	},
+
+	updateQueue : function(data){
+		if(this.queue == null)
+			this.queue = new CycleQueue();
+		this.queue.enQueue(data);
+		return this.queue;
+	},
+
+	count : function(data){
+		for (var i=0;i<data.peoplePosition.length;i++) {
+			var peoplePos = new OpenLayers.Geometry.Point(data.peoplePosition[i].x,data.peoplePosition[i].y);
+			if(this.selectGeometry.intersects(peoplePos))
+				this.tempNum++;
+		};
+	},
+
+	update:function(cameras){
+		this.areaPeoNum = 0;
+
+		for(var i=0; i < cameras.length; i++){
+			if(this.totalPeopleCountMode=="area")
+				{
+					this.count(cameras[i]);	
+				}else{
+					if(cameras[i].number!=-1)
+					{
+						this.areaPeoNum = this.areaPeoNum+cameras[i].number;
+					}						
+				}
+		}
+		if(this.totalPeopleCountMode=="area")
+		{
+			this.areaPeoNum = this.tempNum;	
+			this.tempNum = 0;
+		}
+		this.totalNumDynachart.addTotalNumPoint(this.areaPeoNum,this.totalAlarm);
+		for (var i = 0; i < 4; i++) {
+			$("#curvegraphheader0"+(i+1)).html(cameras[this.queue.base[i]].name);
+			this.Dynacharts[i].addPoint(cameras[this.queue.base[i]]);
+		};
+	},
+});
+
+//摄像机点位图&实时监控
+OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
+	vlcPlayer:null,
+	targetURL:"",
+	peopleList:null,
+	initialize : function(cameras,videoPlayer,peopleList){
+		this._cameras = cameras;
+		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
+		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
+		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
+		this.vlcPlayer = videoPlayer;
+		this.peopleList = peopleList;
+	},
+	play : function(url){
+		$("#videoPlayer").show();
+		this.doGo(url);
+	},
+	doGo : function(targetURL)
+	{
+		this.vlcPlayer.playlist.stop();
+	    if( this.vlcPlayer )
+	    {
+	        this.vlcPlayer.playlist.items.clear();
+	        while( this.vlcPlayer.playlist.items.count > 0 )
+	        {
+	            // clear() may return before the playlist has actually been cleared
+	            // just wait for it to finish its job
+	        }
+	        var options = [":rtsp-tcp"];
+	        var itemId = this.vlcPlayer.playlist.add(targetURL,"",options);
+	        options = [];
+	        if( itemId != -1 )
+	        {
+	            // play MRL
+	            this.vlcPlayer.playlist.playItem(itemId);
+	        }
+	        else
+	        {
+	            alert("cannot play at the moment !");
+	        }
+	    }
+	},
+	renderCamera : function(camera){
+		var peopleList = this.peopleList;
+		this._cameraLayer.addMarker(camera.marker);
+
+		camera.marker.camera = camera;		
+		camera.marker.events.register("click",camera.marker,function(evt){	
+				peopleList.realtimeVideoSelect(this.camera,true);  
+		});
+		if(camera.number>camera.alarm)
+		{
+			camera.fov.style = {
+				strokeColor: "red",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "red",
+                fillOpacity: 0.5,
+				// label with \n linebreaks
+                label : String(camera.number),                   
+                fontColor: "black",
+                fontSize: "12px",
+                fontFamily: "Courier New, monospace",
+                fontWeight: "bold",
+                labelAlign: "cm",
+                labelXOffset: "0",
+                labelYOffset: "0",
+                labelOutlineColor: "white",
+                labelOutlineWidth: 3
+			}
+		}else{
+			camera.fov.style = {
+				strokeColor: "#7CB5EC",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "#7CB5EC",
+                fillOpacity: 0.5,
+				// label with \n linebreaks
+                label : String(camera.number),                   
+                fontColor: "black",
+                fontSize: "12px",
+                fontFamily: "Courier New, monospace",
+                fontWeight: "bold",
+                labelAlign: "cm",
+                labelXOffset: "0",
+                labelYOffset: "0",
+                labelOutlineColor: "white",
+                labelOutlineWidth: 3
+			}
+		}
+		this._fovLayer.addFeatures([camera.fov]);
+	},
+});
+
 //一个摄像机展示总集合
 OpenLayers.peopleViewer = OpenLayers.Class({
 	peopleList:null,
+	peopleChart:null,
+	peopleCollection:null,
 	cameras:null,
-	initialize:function(peopleList){
+	analysisMode:null,
+
+	initialize:function(peopleList,peopleChart,peopleCollection){
 		this.peopleList = peopleList;
+		this.peopleChart = peopleChart;
+		this.peopleCollection = peopleCollection;
 	},
 	setCameras:function(cameras){
 		this.peopleList.cameras = cameras;
-		this.peopleList.update();
+		this.peopleList.updateList();
+	},
+	setAnalysisMode:function(analysisMode){
+		this.analysisMode = analysisMode;
 	},
 	select:function(camera,isScrollTo){
 		this.peopleList.select(camera,isScrollTo);
 	},
 	attach:function(map){
-		this.peopleList.update();
+		this.peopleList.updateList();
 	},
 	notify:function(){
-		var pv = this;
+		var peopleviewer = this;
 		$.ajax({
 			type:"POST",
 			url:"peopleQuery.php",
 			dataType:"json",
 			success:function(data){
 				var cameras = OpenLayers.People.Prase(data);
-				pv.peopleList.linkage(cameras);
+				peopleviewer.peopleList.update(cameras);
+				peopleviewer.peopleChart.update(cameras);
+				switch (peopleviewer.analysisMode)
+				{
+					case 1:						
+						peopleviewer.peopleCollection.setCameras(cameras);
+						peopleviewer.peopleCollection.update();
+						break;
+				}
 			}
 		});
 	},

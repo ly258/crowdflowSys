@@ -14,26 +14,26 @@
 	<script type="text/javascript" src="./scripts/chart.js"></script>
 	<script type="text/javascript" src="./scripts/people2.js"></script>
 	<script type="text/javascript">
-			var peopleList;
+			var peopleList,peopleChart;
 			var analysisMode,peopleQueryer,map;
 			
 			function init(){
 				var chart;
 				map = MapConfig.createMap("map");			
 
-				//var vlc = document.getElementById("vlc");
-				//var peopleCollection = new OpenLayers.peopleCollection([],vlc);
+				var vlc = document.getElementById("vlc");
+				var peopleCollection = new OpenLayers.peopleCollection([],vlc);
+				peopleCollection.attach(map);
 
-				//peopleCollection.attach(map);
-				peopleList = new OpenLayers.peopleList("rsList");
-				//peopleList.peopleCollection = peopleCollection;
-				peopleList.map = map;
-				peopleList.analysisMode = 1;
+				peopleChart = new OpenLayers.peopleChart();
+
+				peopleList = new OpenLayers.peopleList("rsList",peopleChart);
+
 				peopleQueryer = new OpenLayers.PeopleQueryer(peopleList);
 				peopleQueryer.query();
 
-				peopleViewer = new OpenLayers.peopleViewer(peopleList);
-
+				peopleViewer = new OpenLayers.peopleViewer(peopleList,peopleChart,peopleCollection);
+				peopleViewer.setAnalysisMode(1);
 				//var peopleDistribution = new OpenLayers.peopleDistribution();
 				//var peopleDirection = new OpenLayers.peopleDirection();
 				//peopleList.peopleDistribution = peopleDistribution;
@@ -57,12 +57,12 @@
                 	Dynachart.loadchart("curvegraph0"+i);
                 	Dynacharts.push(Dynachart);
                 };
-                peopleList.Dynacharts = Dynacharts;
+                peopleChart.Dynacharts = Dynacharts;
 
                 var totalNumDynachart = new dynamicChart();
                 totalNumDynachart.setHighcharts();
                 totalNumDynachart.loadchart("curvegraphmain");
-                peopleList.totalNumDynachart = totalNumDynachart;
+                peopleChart.totalNumDynachart = totalNumDynachart;
                 
 				setInterval('peopleViewer.notify()',2000); 
 
@@ -70,7 +70,7 @@
   					code = (e.keyCode ? e.keyCode : e.which);
   					if (code == 13)
   					{
-      					peopleList.totalAlarm = $("#totalAlarm").attr("value");
+      					peopleChart.totalAlarm = $("#totalAlarm").attr("value");
   					}
 				});   
 
