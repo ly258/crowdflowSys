@@ -552,39 +552,7 @@ OpenLayers.CameraList = OpenLayers.Class({
 	},
 	defaultStyle:function(i){
 		var cameras = this.cameras;
-		var typeName,stateName;
 
-		switch(cameras[i].type){
-				case 0:
-					typeName ="枪机";
-					break;
-				case 1:
-					typeName ="云台枪机";
-					break;
-				case 2:
-					typeName ="球机";
-					break;
-
-		}
-
-		switch(cameras[i].tstate){
-				case 0:
-					stateName ="正常";
-					break;
-				case 1:
-					stateName ="故障";
-					break;
-				case 2:
-					stateName ="偏移";
-					break;
-				case 3:
-					stateName ="拟建";
-					break;
-				case 4:
-					stateName ="在建";
-					break;
-
-		}
 		var style= $("<div id="+i+" class=\"item\" style=\"width:100%;height:110px;cursor:pointer\">"
 				+"<table width=\"100%\" height=\"100%\">"
 				+"	<tr><td  width=\"40\" align=\"center\" align=\"center\" valign=\"center\">"+(i+1)+"</td>"

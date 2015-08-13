@@ -152,7 +152,7 @@ OpenLayers.People.Prase=function(cGeoJson){
 
 //摄像机列表
 OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
-	peopleChart:null,//人群数量变化折线图
+	mediante:null,//中介者
 	presentpeonumContainerName:null,
 
 	initialize:function(name,peopleChart,presentpeonumContainerName){
@@ -164,41 +164,9 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	
 	defaultStyle : function(i){
 		var cameras = this.cameras;
-		var typeName,stateName;//摄像机列表中摄像机类型与摄像机状态
 		var select_curveshow;//控制摄像机列表中是否显示曲线图
+		var mediante = this.mediante;
 
-		//判断
-		switch(cameras[i].type){
-				case 0:
-					typeName ="枪机";
-					break;
-				case 1:
-					typeName ="云台枪机";
-					break;
-				case 2:
-					typeName ="球机";
-					break;
-
-		}
-
-		switch(cameras[i].tstate){
-				case 0:
-					stateName ="正常";
-					break;
-				case 1:
-					stateName ="故障";
-					break;
-				case 2:
-					stateName ="偏移";
-					break;
-				case 3:
-					stateName ="拟建";
-					break;
-				case 4:
-					stateName ="在建";
-					break;
-
-		}
 		//各摄像机下人群数量初始化
 		var peonum = (cameras[i].number==-1) ? "未做统计" : cameras[i].number;
 		
@@ -209,7 +177,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		{
 			select_curveshow = "";
 			//有人数统计的摄像机入循环队列
-			this.peopleChart.queue.enQueue(i);
+			mediante.peopleChart.queue.enQueue(i);
 		}
 
 		var style= $("<div id="+i+" class=\"item\" style=\"width:100%;height:110px;cursor:pointer\">"
@@ -228,7 +196,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 				+"				 	<th id='presentpeonum"+i+"' colspan=\"1\">当前人数:"+peonum+"</th>"
 				+"                  <th colspan=\"1\">&nbsp&nbsp&nbsp统计曲线：</th>"
 				+"                  <th colspan=\"1\">"
-				+"                  	<select onChange='selectchangeable("+i+")' id='select"+i+"' "+select_curveshow+">"
+				+"                  	<select onClick='stopPro()' onChange='selectchangeable("+i+")' id='select"+i+"' "+select_curveshow+">"
 				+"                      	<option value='1'>是</option>"
 				+"                          <option value='0' selected='selected'>否</option>"
 				+"                      </select>"
@@ -248,7 +216,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 	updateList:function(){	
 		var container = this.container;
 		var cameras = this.cameras;
-		//var cameraCollection = this.cameraCollection;
+		var mediante = this.mediante;
 		
 		container.empty();
 		for(var i = 0;i < cameras.length;i++){
@@ -258,10 +226,9 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 			container.append(item);			
 		}
 
-		var peolist = this;
 		//定义点击函数
 		$(".item").click(function(){		
-			peolist.realtimeVideoSelect(cameras[$(this).attr("id")],true);			
+			mediante.select(cameras[$(this).attr("id")],true);			
 		});
 		//列表变色处理
  		$(".item").mouseover(function(){
@@ -441,29 +408,22 @@ OpenLayers.RDrag = OpenLayers.Class({
 
 //摄像机点位图&实时监控
 OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{	
-	videoPlayer:null,
+	mediante:null,//中介者
 
-	initialize : function(cameras,videoPlayer){
+	initialize : function(cameras){
 		this._cameras = cameras;
 		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
 		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
 		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
-		this.videoPlayer = videoPlayer;
-	},
-
-
-	realtimeVideoSelect : function(camera,isScrollTo){
-		this.videoPlayer.play(camera.avpath);
-		this.select(camera,isScrollTo);
 	},
 	
 	renderCamera : function(camera){
-		var peopleCollection = this;
+		var mediante = this.mediante;
 		this._cameraLayer.addMarker(camera.marker);
 
 		camera.marker.camera = camera;		
 		camera.marker.events.register("click",camera.marker,function(evt){	
-				peopleCollection.realtimeVideoSelect(this.camera,true);  
+				mediante.select(this.camera,true);  
 		});
 		if(camera.number>camera.alarm)
 		{
@@ -509,18 +469,156 @@ OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
 	},
 });
 
+//人群时空分布
+OpenLayers.peopleDistribution = OpenLayers.Class({
+	map:null,
+	cameras:null,
+	peopleDistributionLayer:null,
+	initialize : function(){
+		var peopleDistributionLayer = new OpenLayers.Layer.Vector("时空分布",{
+			styleMap : new OpenLayers.StyleMap({'default':{
+				strokeColor: "#00CC00",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "#00CC00",
+                fillOpacity: 0.5,
+                pointRadius: 2,
+                pointerEvents: "visiblePainted",
+			}})
+		});
+		this.peopleDistributionLayer = peopleDistributionLayer;
+	},
+	update : function(){
+		this.peopleDistributionLayer.removeAllFeatures();
+		var cameras = this.cameras;
+		var pointcollection = new Array();
+		for(var i=0;i<cameras.length;i++)
+			for(var j=0;j<cameras[i].peoplePosition.length;j++)
+			{
+				if(this.cameras[i].peoplePosition[j].y!=-1)
+				{
+					var point = new OpenLayers.Geometry.Point(this.cameras[i].peoplePosition[j].x,this.cameras[i].peoplePosition[j].y);
+					var pointFeature = new OpenLayers.Feature.Vector(MapConfig.transform(point));
+					pointcollection.push(pointFeature);
+				}				
+			}	
+			this.peopleDistributionLayer.addFeatures(pointcollection);	
+	},
+	attach : function(map){
+		map.addLayers([this.peopleDistributionLayer]);
+		this.map = map;
+	},
+	detach : function(){
+		if(!this.map) return;
+
+		this.map.removeLayer(this.peopleDistributionLayer);
+		this.map = null;
+	},
+});
+
+//人群运动趋势
+OpenLayers.peopleDirection = OpenLayers.Class({
+	map:null,
+	cameras:null,
+	peopleDirectionLayer:null,
+	initialize : function(){
+		var peopleDirectionLayer = new OpenLayers.Layer.Vector("运动趋势",{
+			styleMap : new OpenLayers.StyleMap({'default':{
+				strokeColor: "#00FF00", 
+				strokeWidth: 2, 
+				strokeDashstyle: "solid", 
+				strokeLinecap: "square"
+			}})
+		});
+		this.peopleDirectionLayer = peopleDirectionLayer;
+	},
+	update : function(){
+		this.peopleDirectionLayer.removeAllFeatures();
+		var cameras = this.cameras;
+		var linecollection = new Array();
+		var polygoncolllection = new Array();
+		var ptsArr = new Array();
+		var pointlist = [];
+		var style_polygon = {
+		                strokeColor: "#00FF00",
+		                strokeWidth: 2,
+		                strokeOpacity: 0.8,
+		                fillOpacity: 0.8,
+		                fillColor: "#00FF00",
+		        };
+		for(var i=0;i<cameras.length;i++)
+			for(var j=0;j<cameras[i].startpoint.length;j++)
+			{
+				var st = new OpenLayers.Geometry.Point(this.cameras[i].startpoint[j].x,this.cameras[i].startpoint[j].y); 
+		    	var end = new OpenLayers.Geometry.Point(this.cameras[i].endpoint[j].x,this.cameras[i].endpoint[j].y);
+		    	var angle;//计算旋转角度
+				var temp = Math.sqrt((end.y-st.y)*(end.y-st.y)+(end.x-st.x)*(end.x-st.x));
+				if((end.y-st.y)>0&&(end.x-st.x)>0)//第一象限
+					angle = Math.asin((end.x-st.x)/temp);
+				else if((end.y-st.y)>0&&(end.x-st.x)<0)//第四象限
+					angle = 2*Math.PI+Math.asin((end.x-st.x)/temp);
+				else if((end.y-st.y)<0&&(end.x-st.x)>0)//第二象限
+					angle = Math.acos((end.y-st.y)/temp);
+				else if((end.y-st.y)<0&&(end.x-st.x)<0)//第三象限
+					angle = Math.PI-Math.asin((end.x-st.x)/temp);
+
+				var end02 = new OpenLayers.Geometry.Point(0*Math.cos(angle)-10*Math.sin(-angle)+st.x,0*Math.sin(-angle)+10*Math.cos(-angle)+st.y);
+				pointlist.splice(0,pointlist.length);
+				pointlist.push(MapConfig.transform(st));
+				pointlist.push(MapConfig.transform(end02));
+
+				var lineFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(pointlist),null,null);
+				linecollection.push(lineFeature);
+
+				ptsArr.splice(0,ptsArr.length);
+				ptsArr.push(MapConfig.transform(new OpenLayers.Geometry.Point(0*Math.cos(angle)-10*Math.sin(-angle)+st.x,0*Math.sin(-angle)+10*Math.cos(-angle)+st.y)));
+				ptsArr.push(MapConfig.transform(new OpenLayers.Geometry.Point(-2*Math.cos(angle)-8*Math.sin(-angle)+st.x,-2*Math.sin(-angle)+8*Math.cos(-angle)+st.y)));
+				ptsArr.push(MapConfig.transform(new OpenLayers.Geometry.Point(2*Math.cos(angle)-8*Math.sin(-angle)+st.x,2*Math.sin(-angle)+8*Math.cos(-angle)+st.y)));
+
+				var linearRing = new OpenLayers.Geometry.LinearRing(ptsArr);
+				var polygon = new OpenLayers.Geometry.Polygon([linearRing]);
+		        
+		        polygonFeature = new OpenLayers.Feature.Vector(polygon,null,style_polygon);
+		        polygoncolllection.push(polygonFeature);
+		        //this.peopleDirectionLayer.addFeatures([polygonFeature]);			
+			}	
+			this.peopleDirectionLayer.addFeatures(linecollection);
+			this.peopleDirectionLayer.addFeatures(polygoncolllection);	
+
+	},
+	attach : function(map){
+		map.addLayers([this.peopleDirectionLayer]);
+		this.map = map;
+	},
+	detach : function(){
+		if(!this.map) return;
+
+		this.map.removeLayer(this.peopleDirectionLayer);
+		this.map = null;
+	},
+});
+
 //一个摄像机展示总集合
 OpenLayers.peopleViewer = OpenLayers.Class({
+	map:null,
 	peopleList:null,
 	peopleChart:null,
 	peopleCollection:null,
+	peopleDistribution:null,
+	peopleDirection:null,
+	videoPlayer:null,
 	cameras:null,
 	analysisMode:null,
 
-	initialize:function(peopleList,peopleChart,peopleCollection){
+	initialize:function(peopleList,peopleChart,peopleCollection,peopleDistribution,peopleDirection,videoPlayer){
 		this.peopleList = peopleList;
 		this.peopleChart = peopleChart;
 		this.peopleCollection = peopleCollection;
+		this.peopleDistribution = peopleDistribution;
+		this.peopleDirection = peopleDirection;
+		this.videoPlayer = videoPlayer;
+		peopleCollection.mediante = this;
+		peopleList.mediante = this;
 	},
 	setCameras:function(cameras){
 		this.peopleList.cameras = cameras;
@@ -530,10 +628,11 @@ OpenLayers.peopleViewer = OpenLayers.Class({
 		this.analysisMode = analysisMode;
 	},
 	select:function(camera,isScrollTo){
+		this.videoPlayer.play(camera.avpath);
 		this.peopleList.select(camera,isScrollTo);
 	},
 	attach:function(map){
-		this.peopleList.updateList();
+		this.map = map;
 	},
 	notify:function(){
 		var peopleviewer = this;
@@ -548,8 +647,44 @@ OpenLayers.peopleViewer = OpenLayers.Class({
 				switch (peopleviewer.analysisMode)
 				{
 					case 1:						
+						if(peopleviewer.peopleDistribution.map!=null)
+						{
+							peopleviewer.peopleDistribution.detach();
+						}
+						if(peopleviewer.peopleDirection.map!=null)
+						{
+							peopleviewer.peopleDirection.detach();
+						}						
 						peopleviewer.peopleCollection.setCameras(cameras);
 						peopleviewer.peopleCollection.update();
+						break;
+					case 2:
+						if(peopleviewer.peopleDistribution.map==null)
+						{
+							peopleviewer.peopleDistribution.attach(peopleviewer.map);
+						}
+						if(peopleviewer.peopleDirection.map!=null)
+						{
+							peopleviewer.peopleDirection.detach();
+						}
+						peopleviewer.peopleCollection.setCameras(cameras);
+						peopleviewer.peopleCollection.update();
+						peopleviewer.peopleDistribution.cameras = cameras;
+						peopleviewer.peopleDistribution.update();
+						break;
+					case 3:
+						if(peopleviewer.peopleDirection.map==null)
+						{
+							peopleviewer.peopleDirection.attach(peopleviewer.map);
+						}
+						if(peopleviewer.peopleDistribution.map!=null)
+						{
+							peopleviewer.peopleDistribution.detach();
+						}
+						peopleviewer.peopleCollection.setCameras(cameras);
+						peopleviewer.peopleCollection.update();
+						peopleviewer.peopleDirection.cameras = cameras;
+						peopleviewer.peopleDirection.update();
 						break;
 				}
 			}
