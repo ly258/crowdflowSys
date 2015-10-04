@@ -18,14 +18,17 @@ try:
         print("input id!")
         raise ValueError
     conn = pg.connect(database="videocms",user="postgres",password="postgres",host="127.0.0.1",port="5432")
+    #print(conn)
     cur = conn.cursor()
     cur.execute("select id as c0 , type as c1,ST_AsText(location) as c2,height as c3,ccd_width as c4,ccd_height as c5,pan as c6,tilt as c7,focal as c8 from videocms_camera where id='"+id+"'")
+    #print(cur.rowcount)
     if cur.rowcount==0:
         print("select id as c0 , type as c1,ST_AsText(location) as c2,height as c3,ccd_width as c4,ccd_height as c5,pan as c6,tilt as c7,focal as c8 from videocms_camera where id='"+id+"'")
         print(0)
         print("no id found")
         exit(0)
     row = cur.fetchone()
+    #print(row)
     location_str = row[2].split(' ')
     c = cc.Camera(float(location_str[0].split('(')[1]),float(location_str[1].split(')')[0]),float(row[3]),0,0,float(row[4]),float(row[5]),float(row[8]))
     if row[1] == 0: #stable camera
@@ -80,6 +83,7 @@ try:
     #polygon = Polygon.Polygon(sliceFov)
 
     cur.execute("select * from videocms_fov where id=%s",(id,))
+    #print(cur.rowcount)
     if(cur.rowcount==0):
         cur.execute("insert into videocms_fov(id) values (%s)",(id,))
 
@@ -96,6 +100,7 @@ try:
     sql = sql + ")')"
 
     cur.execute("update videocms_fov set fov_real = "+sql+" , fov_full="+sql+" where id='"+id+"'")
+    #print("update videocms_fov set fov_real = "+sql+" , fov_full="+sql+" where id='"+id+"'")
     conn.commit()
     print(cur.rowcount)
     conn.close()

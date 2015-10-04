@@ -12,45 +12,38 @@
 	<script type="text/javascript" src="./scripts/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="./scripts/highcharts.js"></script>
 	<script type="text/javascript" src="./scripts/chart.js"></script>
-	<script type="text/javascript" src="./scripts/people2.js"></script>
-	<script type="text/javascript">
-			var peopleChart;
-			var analysisMode;
-			
+	<script type="text/javascript" src="./scripts/people.js"></script>
+	<script type="text/javascript">			
 			function init(){
-				var chart;
 				var map = MapConfig.createMap("map");			
-
+				//初始化实时视频播放器
 				var vlc = document.getElementById("vlc");
 				var vlcPlayer = new OpenLayers.videoPlayer(vlc);
-
-				peopleChart = new OpenLayers.peopleChart("curvegraphheader");
-
+				//图表观察者
+				var peopleChart = new OpenLayers.peopleChart("curvegraphheader");
+				//列表观察者
 				var peopleList = new OpenLayers.peopleList("rsList",peopleChart,"presentpeonum");
-
+				//实时监控观察者
 				var peopleCollection = new OpenLayers.peopleCollection([]);
 				peopleCollection.attach(map);
-
+				//人群分布观察者
 				var peopleDistribution = new OpenLayers.peopleDistribution();
+				//人群运动趋势观察者
 				var peopleDirection = new OpenLayers.peopleDirection();
-
-				var peopleQueryer = new OpenLayers.PeopleQueryer(peopleList);
+				//人群查询分析器初始化
+				var peopleQueryer = new OpenLayers.PeopleQueryer(peopleList,peopleChart);
 				peopleQueryer.query();
-
+				//主题对象初始化
 				var peopleViewer = new OpenLayers.peopleViewer(peopleList,peopleChart,peopleCollection,peopleDistribution,peopleDirection,vlcPlayer);
 				peopleViewer.attach(map);
-				peopleViewer.setAnalysisMode(1);
-
+				peopleViewer.setAnalysisMode(1);//设置分析模式
+				//监控区域设置初始化
 				$("#rect").attr("disabled","true");
         		$("#polygon").attr("disabled","true");
-        		$("#totalAlarm").attr("disabled","true");
-
-				var queue = peopleChart.queue;
-				for (var i = 0; i < 4; i++) {
-					$("#select"+queue.base[i]).val("1");
-				};								
-				
+        		$("#totalAlarm").attr("disabled","true");							
+				//布局初始化
 				layerOut();
+				//highcharts折线图初始化
                 var Dynacharts = new Array();
                 for (var i = 1; i < 5; i++) {
                 	var Dynachart = new dynamicChart();
@@ -59,14 +52,11 @@
                 	Dynacharts.push(Dynachart);
                 };
                 peopleChart.Dynacharts = Dynacharts;
-
                 var totalNumDynachart = new dynamicChart();
                 totalNumDynachart.setHighcharts();
                 totalNumDynachart.loadchart("curvegraphmain");
                 peopleChart.totalNumDynachart = totalNumDynachart;
-                
-				setInterval('peopleViewer.notify()',2000); 
-
+                //监听区域警戒总人数
 				$("#totalAlarm").keypress(function(e){
   					code = (e.keyCode ? e.keyCode : e.which);
   					if (code == 13)
@@ -74,10 +64,71 @@
       					peopleChart.totalAlarm = $("#totalAlarm").attr("value");
   					}
 				});   
-
+				//视频窗口拖拽
 				var Drag = new OpenLayers.RDrag($('#videoPlayer').get(0));
-
-				$(window).resize(layerOut);
+				//页面元素初始化
+				var realtime_monitoringBtn = document.getElementById("realtime_monitoring");
+				realtime_monitoringBtn.onclick = function(){
+					peopleViewer.analysisMode = 1;
+		       		$("#realtime_monitoring").css("color","blue");
+		       		$("#st_distribution").css("color","#000000");
+		       		$("#cluster").css("color","#000000");
+		       		$("#tendency").css("color","#000000");
+		       		$("#unusual").css("color","#000000");
+				};
+				var st_distributionBtn = document.getElementById("st_distribution");
+				st_distributionBtn.onclick = function(){
+		       		peopleViewer.analysisMode = 2;
+		       		$("#realtime_monitoring").css("color","#000000");
+		       		$("#st_distribution").css("color","blue");
+		       		$("#cluster").css("color","#000000");
+		       		$("#tendency").css("color","#000000");
+		       		$("#unusual").css("color","#000000");
+				};
+				var tendencyBtn = document.getElementById("tendency");
+				tendencyBtn.onclick = function(){
+		       		peopleViewer.analysisMode = 3;
+		       		$("#realtime_monitoring").css("color","#000000");
+		       		$("#st_distribution").css("color","#000000");
+		       		$("#cluster").css("color","#000000");
+		       		$("#tendency").css("color","blue");
+		       		$("#unusual").css("color","#000000");
+				};
+				var ifareasetting = document.getElementById("ifareasetting");
+				ifareasetting.onclick = function(){
+					if($('#ifareasetting').prop('checked')==false)
+		        	{
+		        		$("#rect").attr("disabled","true");
+		        		$("#polygon").attr("disabled","true");
+		        		$("#totalAlarm").attr("disabled","true");
+		        		peopleChart.totalPeopleCountMode = "whole";
+		        		peopleQueryer.detach();
+		        	}else{
+		        		$("#rect").removeAttr("disabled");
+		        		$("#polygon").removeAttr("disabled");
+		        		$("#totalAlarm").removeAttr("disabled");
+		        		peopleQueryer.attach(map);
+		        	}
+				};
+				//监控区域设置事件监听
+				var rect = document.getElementById("rect");
+				rect.onclick = function(){
+					peopleQueryer.setQueryMode(this.value);
+				};
+				var polygon = document.getElementById("polygon");
+				polygon.onclick = function(){
+					peopleQueryer.setQueryMode(this.value);
+				};
+				//添加事件代理,监听onchange事件
+				$("#rsList").delegate("select","change",peopleChart,function(){
+					var selectid = this.id;
+					var i = selectid.slice(6);
+				    var queue = peopleChart.queue;
+		       		$("#select"+queue.base[queue.rear]).val("0");
+		       		peopleChart.updateQueue(i);
+				});
+				//数据请求
+				setInterval(function(){peopleViewer.notify();},2000); 
 			}			
 		//布局初始化
 		function layerOut(){
@@ -95,65 +146,13 @@
 			//取消事件冒泡 
 			var e=arguments.callee.caller.arguments[0]||event; //若省略此句，下面的e改为event，IE运行可以，但是其他浏览器就不兼容
 			if (e && e.stopPropagation) { 
-			 	// 火狐浏览器阻止事件冒泡
+			 	// 火狐浏览器、chrome阻止事件冒泡
 			  	e.stopPropagation(); 
 			} else if (window.event) { 
-			  	//IE、chrome浏览器阻止事件冒泡
+			  	//IE浏览器阻止事件冒泡
 			  	window.event.cancelBubble = true; 
 			} 
 		}        		              
-        function selectchangeable(i)
-        {
-       		var queue = peopleChart.queue;
-       		$("#select"+queue.base[queue.rear]).val("0");
-       		peopleChart.updateQueue(i);
-        }
-        function realtime_monitoring(peopleViewer){
-       		peopleViewer.analysisMode = 1;
-       		$(".realtime_monitoring").css("color","blue");
-       		$(".st_distribution").css("color","#000000");
-       		$(".cluster").css("color","#000000");
-       		$(".tendency").css("color","#000000");
-       		$(".unusual").css("color","#000000");
-        }
-        function st_distribution(peopleViewer)
-        {
-       		peopleViewer.analysisMode = 2;
-       		$(".realtime_monitoring").css("color","#000000");
-       		$(".st_distribution").css("color","blue");
-       		$(".cluster").css("color","#000000");
-       		$(".tendency").css("color","#000000");
-       		$(".unusual").css("color","#000000");
-        }
-        function tendency(peopleViewer)
-        {
-       		peopleViewer.analysisMode = 3;
-       		$(".realtime_monitoring").css("color","#000000");
-       		$(".st_distribution").css("color","#000000");
-       		$(".cluster").css("color","#000000");
-       		$(".tendency").css("color","blue");
-       		$(".unusual").css("color","#000000");
-        }
-        function ifareasetting()
-        {
-        	if($('#ifareasetting').prop('checked')==false)
-        	{
-        		$("#rect").attr("disabled","true");
-        		$("#polygon").attr("disabled","true");
-        		$("#totalAlarm").attr("disabled","true");
-        		peopleList.totalPeopleCountMode = "whole";
-        		peopleQueryer.detach();
-        	}else{
-        		$("#rect").removeAttr("disabled");
-        		$("#polygon").removeAttr("disabled");
-        		$("#totalAlarm").removeAttr("disabled");
-        		peopleQueryer.attach(map);
-        	}
-        }
-        function modeChange(element)
-        {
-        	peopleQueryer.setQueryMode(element.value);
-        }
 	</script>
 </head>
 <body onload="init()">
@@ -184,11 +183,11 @@
 				</div>
 				<div id="cameraQueryControl" class="tabContent">
 					<b style="">设置方式：</b>
-					<input  id="rect" name = "georadio" type="radio" value="rect" onclick="modeChange(this);"/>
+					<input  id="rect" name = "georadio" type="radio" value="rect" />
 					矩形
-					<input  id="polygon" name = "georadio" type="radio" value="polygon" onclick="modeChange(this);"/>
+					<input  id="polygon" name = "georadio" type="radio" value="polygon" />
 					多边形
-					<input  id="ifareasetting" name = "ifareasetting" type="checkbox" onclick="ifareasetting();"/>
+					<input  id="ifareasetting" name = "ifareasetting" type="checkbox"/>
 					是否设置
 					<br/>
 					<hr/> <b style="float:left;">区域警戒人数设置：</b>
@@ -200,9 +199,9 @@
 		</div>
 		<div class="mapContainer">
 			<div id="controls">
-				<div onclick="realtime_monitoring()" class="realtime_monitoring">实时监控</div>
-				<div onclick="st_distribution()" class="st_distribution">时空分布</div>
-				<div onclick="tendency()" class="tendency">运动趋势</div>
+				<div id="realtime_monitoring">实时监控</div>
+				<div id="st_distribution">时空分布</div>
+				<div id="tendency">运动趋势</div>
 			</div>
 			<div id="map"></div>
 		</div>

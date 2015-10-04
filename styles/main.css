@@ -155,7 +155,7 @@ div .rsContent{
 	height: 35px;
 }
 
-.realtime_monitoring{
+#realtime_monitoring{
 	color:blue;
 	float: left;
 	margin: 5px 15px 5px 35px;
@@ -163,18 +163,18 @@ div .rsContent{
 	font-weight:600;
 }
 
-.realtime_monitoring:hover{
+#realtime_monitoring:hover{
 	cursor: pointer;
 }
 
-.st_distribution{
+#st_distribution{
 	float: left;
 	margin: 5px 15px 5px 15px;
 	font-size: 17px;
 	font-weight:600;
 }
 
-.st_distribution:hover{
+#st_distribution:hover{
 	cursor: pointer;
 }
 
@@ -189,14 +189,14 @@ div .rsContent{
 	cursor: pointer;
 }*/
 
-.tendency{
+#tendency{
 	float: left;
 	margin:5px 15px 5px 15px;
 	font-size: 17px;
 	font-weight:600;
 }
 
-.tendency:hover{
+#tendency:hover{
 	cursor: pointer;
 }
 

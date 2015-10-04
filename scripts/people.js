@@ -16,30 +16,33 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
 		POLYGON:"POLYGON"
 	},
 	peopleList:null,
-	peopleCollection:null,
+	peopleChart:null,
 	queryurl:"peopleQuery.php",
 
-	initialize : function(peopleList,peopleCollection){
+	initialize : function(peopleList,peopleChart){
 		this.peopleList = peopleList;
-		this.peopleCollection = peopleCollection;
+		this.peopleChart = peopleChart;
 
+		//定义选择图层样式
 		var selectLayer = new OpenLayers.Layer.Vector("selectLayer",{
 			styleMap:new OpenLayers.StyleMap({'default':{
-				strokeColor: "#00FFFF",
-                    strokeOpacity: 1,
-                    strokeWidth: 3,
-                    fillColor: "#00FFFF",
-                    fillOpacity: 0.1,
+				strokeColor: "#00FFFF",//边框颜色
+                strokeOpacity: 1,//边框透明度
+                strokeWidth: 3,//边框宽度
+                fillColor: "#00FFFF",//多边形填充色
+                fillOpacity: 0.1,//多边形填充透明度
 			}})
 		});
 		this.selectLayer = selectLayer;
 		var drawControls = {
+			//绘制矩形
 			rect:new OpenLayers.Control.DrawFeature(selectLayer,
                         OpenLayers.Handler.RegularPolygon, {
                         handlerOptions: {
                                 sides: 4,
                                 irregular: true
            }}),
+			//绘制多边形
 			polygon:new OpenLayers.Control.DrawFeature(selectLayer,
                           OpenLayers.Handler.Polygon)
 		};
@@ -49,25 +52,23 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
 			drawControls[key].events.register("featureadded",drawControls[key],function (e){
 				queryer.selectLayer.removeAllFeatures();
 				queryer.selectLayer.addFeatures([e.feature]);
-				peopleList.selectGeometry = MapConfig.rTransform(e.feature.geometry);
-				peopleList.totalPeopleCountMode = "area";
+				queryer.peopleChart.selectGeometry = MapConfig.rTransform(e.feature.geometry);
+				queryer.peopleChart.totalPeopleCountMode = "area";
 			});
         }
 	},
 	query : function(){
+		//系统初始化摄像机列表
 		var peopleList = this.peopleList;
-		var peopleCollection = this.peopleCollection;
 		$.ajax({
 			type:"POST",
-			async:false,
+			async:true,
 			url:this.queryurl,
 			dataType:"json",
 			success:function(data){
 				var cameras = OpenLayers.People.Prase(data);
 				peopleList.cameras = cameras;
-				peopleCollection.setCameras(cameras);
-				peopleList.update();
-				peopleCollection.update();
+				peopleList.updateList();
 			}
 		})
 	},
@@ -102,14 +103,13 @@ OpenLayers.PeopleQueryer = OpenLayers.Class({
 		this.map = null;
 	}
 });
-
 //人群类
 OpenLayers.People = OpenLayers.Class(OpenLayers.Camera,{
 	number:null,
 	peoplePosition:null
 });
 
-//摄像机解析
+//摄像机解析GeoJson解析
 OpenLayers.People.Prase=function(cGeoJson){
 		var geojson = new OpenLayers.Format.GeoJSON();
 		var featureCollection = geojson.read(cGeoJson);
@@ -153,60 +153,24 @@ OpenLayers.People.Prase=function(cGeoJson){
 		return cameras;
 };
 
-//人数列表与人群实时联动
+//摄像机列表
 OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
-	queue:null,
-	totalNumDynachart:null,
-	Dynacharts:null,
-	peopleCollection:null,
-	peopleDistribution:null,
-	peopleDirection:null,
-	map:null,
-	analysisMode:null,
-	selectGeometry:null,
-	tempNum:0,
-	areaPeoNum:0,
-	totalPeopleCountMode:"whole",
-	totalAlarm:100,
+	mediante:null,//中介者
+	presentpeonumContainerName:null,
+
+	initialize:function(name,peopleChart,presentpeonumContainerName){
+		this.container = $("#"+name);
+		this.peopleChart = peopleChart;
+		this.presentpeonumContainerName = presentpeonumContainerName;
+		//this.defaultStyle();
+	},
+	
 	defaultStyle : function(i){
 		var cameras = this.cameras;
-		var typeName,stateName;
-		var select_curveshow;
-		if(this.queue == null)
-			this.queue = new CycleQueue();
+		var select_curveshow;//控制摄像机列表中是否显示曲线图
+		var mediante = this.mediante;
 
-		switch(cameras[i].type){
-				case 0:
-					typeName ="枪机";
-					break;
-				case 1:
-					typeName ="云台枪机";
-					break;
-				case 2:
-					typeName ="球机";
-					break;
-
-		}
-
-		switch(cameras[i].tstate){
-				case 0:
-					stateName ="正常";
-					break;
-				case 1:
-					stateName ="故障";
-					break;
-				case 2:
-					stateName ="偏移";
-					break;
-				case 3:
-					stateName ="拟建";
-					break;
-				case 4:
-					stateName ="在建";
-					break;
-
-		}
-
+		//各摄像机下人群数量初始化
 		var peonum = (cameras[i].number==-1) ? "未做统计" : cameras[i].number;
 		
 		if(cameras[i].number==-1)
@@ -215,7 +179,8 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		}else
 		{
 			select_curveshow = "";
-			this.queue.enQueue(i);
+			//有人数统计的摄像机入循环队列
+			mediante.peopleChart.queue.enQueue(i);
 		}
 
 		var style= $("<div id="+i+" class=\"item\" style=\"width:100%;height:110px;cursor:pointer\">"
@@ -234,7 +199,7 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 				+"				 	<th id='presentpeonum"+i+"' colspan=\"1\">当前人数:"+peonum+"</th>"
 				+"                  <th colspan=\"1\">&nbsp&nbsp&nbsp统计曲线：</th>"
 				+"                  <th colspan=\"1\">"
-				+"                  	<select onChange='selectchangeable("+i+")' id='select"+i+"' "+select_curveshow+">"
+				+"                  	<select onClick='stopPro()' id='select"+i+"' "+select_curveshow+">"
 				+"                      	<option value='1'>是</option>"
 				+"                          <option value='0' selected='selected'>否</option>"
 				+"                      </select>"
@@ -249,6 +214,74 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 				+"</table>"
 			+"</div>");
 		return style;
+	},
+
+	updateList:function(){	
+		var container = this.container;
+		var cameras = this.cameras;
+		var mediante = this.mediante;
+		
+		container.empty();
+		for(var i = 0;i < cameras.length;i++){
+			
+			var item = this.defaultStyle(i);
+			cameras[i].index = i;
+			container.append(item);			
+		}
+
+		//定义点击函数
+		$(".item").click(function(){		
+			mediante.select(cameras[$(this).attr("id")],true);			
+		});
+		//列表变色处理
+ 		$(".item").mouseover(function(){
+				$(this).css("background-color","yellow");		 
+		});
+
+		$(".item").mouseout(function(){
+				$(this).css("background-color","white");		  
+	    });
+	    //初始化是否显示折线图
+	    for (var i = 0; i < 4; i++) {
+			$("#select"+mediante.peopleChart.queue.base[i]).val("1");
+		};	
+	},
+
+	update : function(cameras){				
+		for (var i = 0; i < cameras.length; i++) {
+			if(cameras[i].number==-1)
+			{
+				$("#"+this.presentpeonumContainerName+i).text("当前人数：未做统计");
+			}else{
+				if(cameras[i].number>cameras[i].alarm)
+				{
+					$("#"+this.presentpeonumContainerName+i).html("<b style='color:red;'>当前人数："+cameras[i].number+"</b>");
+				}
+				else
+				{
+					$("#"+this.presentpeonumContainerName+i).html("<b>当前人数："+cameras[i].number+"</b>");
+				}
+			}
+		}	
+	},
+});
+
+//摄像机人群数量统计折线图
+OpenLayers.peopleChart = OpenLayers.Class({
+	container:null,
+	queue:null,
+	totalNumDynachart:null,
+	totalPeopleCountMode:"whole",
+	totalAlarm:100,
+	tempNum:0,
+	areaPeoNum:0,
+	selectGeometry:null,
+	Dynacharts:null,
+
+	initialize:function(name){
+		this.container = name;
+		if(this.queue == null)
+			this.queue = new CycleQueue();
 	},
 
 	updateQueue : function(data){
@@ -266,134 +299,184 @@ OpenLayers.peopleList = OpenLayers.Class(OpenLayers.CameraList,{
 		};
 	},
 
-	realtimeVideoSelect : function(camera,isScrollTo){
-		this.peopleCollection.play(camera.avpath);
-		this.select(camera,isScrollTo);
-	},
+	update:function(cameras){
+		this.areaPeoNum = 0;
 
-	update:function(){	
-		var container = this.container;
-		var cameras = this.cameras;
-		var cameraCollection = this.cameraCollection;
-		
-		container.empty();
-		for(var i = 0;i < cameras.length;i++){
-			
-			var item = this.defaultStyle(i);
-			cameras[i].index = i;
-			container.append(item);			
-		}
-
-		var peolist = this;
-		//定义点击函数
-		$(".item").click(function(){		
-			peolist.realtimeVideoSelect(cameras[$(this).attr("id")],true);			
-		});
-		//列表变色处理
- 		$(".item").mouseover(function(){
-				$(this).css("background-color","yellow");		 
-		});
-
-		$(".item").mouseout(function(){
-				$(this).css("background-color","white");		  
-	    });	
-	},
-
-	linkage : function(){
-		var that = this;
-		$.ajax({
-			type:"POST",
-			url:"peopleQuery.php",
-			dataType:"json",
-			success:function(data){
-				var cameras = OpenLayers.People.Prase(data);
-				that.areaPeoNum = 0;				
-				for (var i = 0; i < cameras.length; i++) {
-					if(cameras[i].number==-1)
-					{
-						$("#presentpeonum"+i).text("当前人数：未做统计");
-					}else{
-						if(cameras[i].number>cameras[i].alarm)
-						{
-							$("#presentpeonum"+i).html("<b style='color:red;'>当前人数："+cameras[i].number+"</b>");
-						}
-						else
-						{
-							$("#presentpeonum"+i).html("<b>当前人数："+cameras[i].number+"</b>");
-						}
-					}
-					if(that.totalPeopleCountMode=="area")
-					{
-						that.count(cameras[i]);	
-					}else{
-						if(cameras[i].number!=-1)
-						{
-							that.areaPeoNum = that.areaPeoNum+cameras[i].number;
-						}						
-					}			
-				};	
-				if(that.totalPeopleCountMode=="area")
+		for(var i=0; i < cameras.length; i++){
+			if(this.totalPeopleCountMode=="area")
 				{
-					that.areaPeoNum = that.tempNum;	
-					that.tempNum = 0;
+					this.count(cameras[i]);	
+				}else{
+					if(cameras[i].number!=-1)
+					{
+						this.areaPeoNum = this.areaPeoNum+cameras[i].number;
+					}						
 				}
-				that.totalNumDynachart.addTotalNumPoint(that.areaPeoNum,that.totalAlarm);
-				for (var i = 0; i < 4; i++) {
-					$("#curvegraphheader0"+(i+1)).html(cameras[that.queue.base[i]].name);
-					that.Dynacharts[i].addPoint(cameras[that.queue.base[i]]);
-				};
-				switch (that.analysisMode)
-				{
-					case 1:
-						if(that.peopleDistribution.map!=null)
-						{
-							that.peopleDistribution.detach();
-						}
-						if(that.peopleDirection.map!=null)
-						{
-							that.peopleDirection.detach();
-						}						
-						that.peopleCollection.setCameras(cameras);
-						that.peopleCollection.update();
-						break;
-					case 2:
-						if(that.peopleDistribution.map==null)
-						{
-							that.peopleDistribution.attach(that.map);
-						}
-						if(that.peopleDirection.map!=null)
-						{
-							that.peopleDirection.detach();
-						}
-						that.peopleCollection.setCameras(cameras);
-						that.peopleCollection.update();
-						that.peopleDistribution.cameras = cameras;
-						that.peopleDistribution.update();
-						break;
-					case 3:
-						if(that.peopleDirection.map==null)
-						{
-							that.peopleDirection.attach(that.map);
-						}
-						if(that.peopleDistribution.map!=null)
-						{
-							that.peopleDistribution.detach();
-						}
-						that.peopleCollection.setCameras(cameras);
-						that.peopleCollection.update();
-						that.peopleDirection.cameras = cameras;
-						that.peopleDirection.update();
-						break;
-				}			
-			},
-			error:function(){
-				alert("请求异常！");
-			}
-		})
-	}
+		}
+		if(this.totalPeopleCountMode=="area")
+		{
+			this.areaPeoNum = this.tempNum;	
+			this.tempNum = 0;
+		}
+		this.totalNumDynachart.addTotalNumPoint(this.areaPeoNum,this.totalAlarm);
+		for (var i = 0; i < 4; i++) {
+			$("#" + this.container + (i+1)).html(cameras[this.queue.base[i]].name);
+			this.Dynacharts[i].addPoint(cameras[this.queue.base[i]]);
+		};
+	},
 });
 
-//人群时空分布刷新
+//实时视频播放器
+OpenLayers.videoPlayer = OpenLayers.Class({
+	vlcPlayer:null,
+	targetURL:"",
+
+	initialize : function(videoPlayer){
+		this.vlcPlayer = videoPlayer;
+	},
+	play : function(url){
+		$("#videoPlayer").show();
+		this.doGo(url);
+	},
+	doGo : function(targetURL)
+	{
+		this.vlcPlayer.playlist.stop();
+	    if( this.vlcPlayer )
+	    {
+	        this.vlcPlayer.playlist.items.clear();
+	        while( this.vlcPlayer.playlist.items.count > 0 )
+	        {
+	            // clear() may return before the playlist has actually been cleared
+	            // just wait for it to finish its job
+	        }
+	        var options = [":rtsp-tcp"];
+	        var itemId = this.vlcPlayer.playlist.add(targetURL,"",options);
+	        options = [];
+	        if( itemId != -1 )
+	        {
+	            // play MRL
+	            this.vlcPlayer.playlist.playItem(itemId);
+	        }
+	        else
+	        {
+	            alert("cannot play at the moment !");
+	        }
+	    }
+	},
+});
+
+/**
+ * OpenLayers.RDrag 
+ * 拖拽控件
+ */
+OpenLayers.RDrag = OpenLayers.Class({
+	o: null,       
+    initialize: function (o) {
+       o.onmousedown = this.start;
+       o.rDrag = this;
+       o.style.left = '500px';
+       o.style.top = '200px';
+     },
+    start: function (e) {
+       var o;
+       var rDrag = this.rDrag;
+       e = rDrag.fixEvent(e);
+       //e.preventDefault && e.preventDefault();
+       rDrag.o = o = this;
+       o.x = e.clientX - rDrag.o.offsetLeft;
+       o.y = e.clientY - rDrag.o.offsetTop;
+       o.onmousemove = rDrag.move;
+       o.onmouseup = rDrag.end;
+     },
+     move: function (e) {
+     	   var rDrag = this.rDrag;
+           e = rDrag.fixEvent(e);
+           var oLeft, oTop;
+           oLeft = e.clientX - rDrag.o.x;
+           oTop = e.clientY - rDrag.o.y;
+           this.rDrag.o.style.left = oLeft + 'px';
+           this.rDrag.o.style.top = oTop + 'px';
+     },
+     end: function (e) {
+           e = this.rDrag.fixEvent(e);
+           var o = this.rDrag.o;
+           this.rDrag.o = o.onmousemove = o.onmouseup = null;
+     },
+    fixEvent: function (e) {
+           if (!e) {
+               e = window.event;
+               e.target = e.srcElement;
+               e.layerX = e.offsetX;
+               e.layerY = e.offsetY;
+           }
+           return e;
+    }
+});
+
+//摄像机点位图&实时监控
+OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{	
+	mediante:null,//中介者
+
+	initialize : function(cameras){
+		this._cameras = cameras;
+		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
+		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
+		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
+	},
+	
+	renderCamera : function(camera){
+		var mediante = this.mediante;
+		this._cameraLayer.addMarker(camera.marker);
+
+		camera.marker.camera = camera;		
+		camera.marker.events.register("click",camera.marker,function(evt){	
+				mediante.select(this.camera,true);  
+		});
+		if(camera.number>camera.alarm)
+		{
+			camera.fov.style = {
+				strokeColor: "red",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "red",
+                fillOpacity: 0.5,
+				// label with \n linebreaks
+                label : String(camera.number),                   
+                fontColor: "black",
+                fontSize: "12px",
+                fontFamily: "Courier New, monospace",
+                fontWeight: "bold",
+                labelAlign: "cm",
+                labelXOffset: "0",
+                labelYOffset: "0",
+                labelOutlineColor: "white",
+                labelOutlineWidth: 3
+			}
+		}else{
+			camera.fov.style = {
+				strokeColor: "#7CB5EC",
+                strokeOpacity: 1,
+                strokeWidth: 1,
+                fillColor: "#7CB5EC",
+                fillOpacity: 0.5,
+				// label with \n linebreaks
+                label : String(camera.number),                   
+                fontColor: "black",
+                fontSize: "12px",
+                fontFamily: "Courier New, monospace",
+                fontWeight: "bold",
+                labelAlign: "cm",
+                labelXOffset: "0",
+                labelYOffset: "0",
+                labelOutlineColor: "white",
+                labelOutlineWidth: 3
+			}
+		}
+		this._fovLayer.addFeatures([camera.fov]);
+	},
+});
+
+//人群时空分布
 OpenLayers.peopleDistribution = OpenLayers.Class({
 	map:null,
 	cameras:null,
@@ -440,7 +523,7 @@ OpenLayers.peopleDistribution = OpenLayers.Class({
 	},
 });
 
-//人群方向刷新
+//人群运动趋势
 OpenLayers.peopleDirection = OpenLayers.Class({
 	map:null,
 	cameras:null,
@@ -522,184 +605,99 @@ OpenLayers.peopleDirection = OpenLayers.Class({
 	},
 });
 
-//实时监控视频窗口拖动
-OpenLayers.realmonitorDrag = OpenLayers.Class({
-	oTitle:null,
-	oDrag:null,
-	disx:null,
-	disy:null,
-	initialize : function(o){
-		o.onmousedown = this.fnDown;
-		o.rDrag = this;
-	},
-	fnDown : function(event){
-		event = event || window.event;
-		var oTitle;
-		var rDrag = this.rDrag;
-		rDrag.oTitle = oTitle = this;
-		rDrag.oDrag = $("#videoPlayer").get(0);
-		//光标按下时光标和面板之间的距离
-		rDrag.disx = event.clientX - rDrag.oDrag.offsetLeft;
-		rDrag.disy = event.clientY - rDrag.oDrag.offsetTop;
-		//移动
-		oTitle.onmousemove = rDrag.fnMove;
-		oTitle.onmouseup = rDrag.fnUp;
-	},
-	fnMove : function(event){
-		var rDrag = this.rDrag;
-		event = event || window.event;
-		var l = event.clientX - this.rDrag.disx,
-			t = event.clientY - this.rDrag.disy;
-		this.rDrag.oDrag.style.left = l+"px";
-		this.rDrag.oDrag.style.top = t+"px";
-	},
-	fnUp: function (e) {
-           var o = this.rDrag.oTitle;
-           this.rDrag.oTitle = this.rDrag.oDrag = o.onmousemove = o.onmouseup = null;
-     },
-});
-
-//实时视频播放
-OpenLayers.peopleCollection = OpenLayers.Class(OpenLayers.CameraCollection,{
-	vlcPlayer:null,
-	targetURL:"",
+//一个摄像机展示总集合
+OpenLayers.peopleViewer = OpenLayers.Class({
+	map:null,
 	peopleList:null,
-	initialize : function(cameras,videoPlayer,peopleList){
-		this._cameras = cameras;
-		this._fovLayer = new OpenLayers.Layer.Vector("FOV");
-		this._trackLayer = new OpenLayers.Layer.Vector("轨迹");
-		this._cameraLayer = new OpenLayers.Layer.Markers("摄像头");
-		this.vlcPlayer = videoPlayer;
+	peopleChart:null,
+	peopleCollection:null,
+	peopleDistribution:null,
+	peopleDirection:null,
+	videoPlayer:null,
+	cameras:null,
+	analysisMode:null,
+
+	initialize:function(peopleList,peopleChart,peopleCollection,peopleDistribution,peopleDirection,videoPlayer){
 		this.peopleList = peopleList;
+		this.peopleChart = peopleChart;
+		this.peopleCollection = peopleCollection;
+		this.peopleDistribution = peopleDistribution;
+		this.peopleDirection = peopleDirection;
+		this.videoPlayer = videoPlayer;
+		peopleCollection.mediante = this;
+		peopleList.mediante = this;
 	},
-	play : function(url){
-		$("#videoPlayer").show();
-		this.doGo(url);
+	setCameras:function(cameras){
+		this.peopleList.cameras = cameras;
+		this.peopleList.updateList();
 	},
-	doGo : function(targetURL)
-	{
-		this.vlcPlayer.playlist.stop();
-	    if( this.vlcPlayer )
-	    {
-	        this.vlcPlayer.playlist.items.clear();
-	        while( this.vlcPlayer.playlist.items.count > 0 )
-	        {
-	            // clear() may return before the playlist has actually been cleared
-	            // just wait for it to finish its job
-	        }
-	        var options = [":rtsp-tcp"];
-	        var itemId = this.vlcPlayer.playlist.add(targetURL,"",options);
-	        options = [];
-	        if( itemId != -1 )
-	        {
-	            // play MRL
-	            this.vlcPlayer.playlist.playItem(itemId);
-	        }
-	        else
-	        {
-	            alert("cannot play at the moment !");
-	        }
-	    }
+	setAnalysisMode:function(analysisMode){
+		this.analysisMode = analysisMode;
 	},
-	renderCamera : function(camera){
-		var peopleList = this.peopleList;
-		this._cameraLayer.addMarker(camera.marker);
-
-		camera.marker.camera = camera;		
-		camera.marker.events.register("click",camera.marker,function(evt){	
-				peopleList.realtimeVideoSelect(this.camera,true);  
+	select:function(camera,isScrollTo){
+		this.videoPlayer.play(camera.avpath);
+		this.peopleList.select(camera,isScrollTo);
+	},
+	attach:function(map){
+		this.map = map;
+	},
+	notify:function(){
+		var peopleviewer = this;
+		$.ajax({
+			type:"POST",
+			url:"peopleQuery.php",
+			dataType:"json",
+			success:function(data){
+				var cameras = OpenLayers.People.Prase(data);
+				peopleviewer.peopleList.update(cameras);
+				peopleviewer.peopleChart.update(cameras);
+				switch (peopleviewer.analysisMode)
+				{
+					case 1:						
+						if(peopleviewer.peopleDistribution.map!=null)
+						{
+							peopleviewer.peopleDistribution.detach();
+						}
+						if(peopleviewer.peopleDirection.map!=null)
+						{
+							peopleviewer.peopleDirection.detach();
+						}						
+						peopleviewer.peopleCollection.setCameras(cameras);
+						peopleviewer.peopleCollection.update();
+						break;
+					case 2:
+						if(peopleviewer.peopleDistribution.map==null)
+						{
+							peopleviewer.peopleDistribution.attach(peopleviewer.map);
+						}
+						if(peopleviewer.peopleDirection.map!=null)
+						{
+							peopleviewer.peopleDirection.detach();
+						}
+						peopleviewer.peopleCollection.setCameras(cameras);
+						peopleviewer.peopleCollection.update();
+						peopleviewer.peopleDistribution.cameras = cameras;
+						peopleviewer.peopleDistribution.update();
+						break;
+					case 3:
+						if(peopleviewer.peopleDirection.map==null)
+						{
+							peopleviewer.peopleDirection.attach(peopleviewer.map);
+						}
+						if(peopleviewer.peopleDistribution.map!=null)
+						{
+							peopleviewer.peopleDistribution.detach();
+						}
+						peopleviewer.peopleCollection.setCameras(cameras);
+						peopleviewer.peopleCollection.update();
+						peopleviewer.peopleDirection.cameras = cameras;
+						peopleviewer.peopleDirection.update();
+						break;
+				}
+			}
 		});
-		if(camera.number>camera.alarm)
-		{
-			camera.fov.style = {
-				strokeColor: "red",
-                strokeOpacity: 1,
-                strokeWidth: 1,
-                fillColor: "red",
-                fillOpacity: 0.5,
-				// label with \n linebreaks
-                label : String(camera.number),                   
-                fontColor: "black",
-                fontSize: "12px",
-                fontFamily: "Courier New, monospace",
-                fontWeight: "bold",
-                labelAlign: "cm",
-                labelXOffset: "0",
-                labelYOffset: "0",
-                labelOutlineColor: "white",
-                labelOutlineWidth: 3
-			}
-		}else{
-			camera.fov.style = {
-				strokeColor: "#7CB5EC",
-                strokeOpacity: 1,
-                strokeWidth: 1,
-                fillColor: "#7CB5EC",
-                fillOpacity: 0.5,
-				// label with \n linebreaks
-                label : String(camera.number),                   
-                fontColor: "black",
-                fontSize: "12px",
-                fontFamily: "Courier New, monospace",
-                fontWeight: "bold",
-                labelAlign: "cm",
-                labelXOffset: "0",
-                labelYOffset: "0",
-                labelOutlineColor: "white",
-                labelOutlineWidth: 3
-			}
-		}
-		this._fovLayer.addFeatures([camera.fov]);
 	},
-});
-
-//观察者列表类
-OpenLayers.ObserverList = OpenLayers.Class({
-	observerList:[],
-	Add : function(obj){
-		return this.observerList.push(obj);
-	},
-	Empty : function(){
-		this.observerList = [];
-	},
-	Count : function(){
-		return this.observerList.length;
-	},
-	Get : function(index){
-		if (index > -1 && index < this.observerList.length) {
-			return this.observerList[index];
-		}
-	},
-	IndexOf : function(obj, startIndex){
-		var i = startIndex, pointer = -1;
-
-		while (i < this.observerList.length) {
-			if (this.observerList[i] === obj) {
-				pointer = i;
-				break;
-			}
-			i++;
-		}
-
-		return pointer;
-	},
-});
-
-OpenLayers.Subject = OpenLayers.Class({
-	observers:null,
-	initialize:function(){
-		this.observers = new OpenLayers.ObserverList();
-	},
-	AddObserver:function(observer){
-		this.observers.Add(observer);
-	},
-	RemoveObserver:function(observer){
-		this.observers.RemoveIndexAt(this.observers.IndexOf(observer, 0));
-	},
-	Notify:function(){
-		var observerCount = this.observers.Count();
-		for (var i = 0; i < observerCount; i++) {
-			this.observers.Get(i).Update();
-		}
-	},
+	detach:function(){
+		this.cameraList.container.empty();
+	}
 });
